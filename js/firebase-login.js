@@ -81,13 +81,8 @@ async function redirectUser(user) {
 
     if (!snap.empty) {
       const userData = snap.docs[0].data();
-      const slug = userData.slug || '';
-      if (slug) {
-        window.location.href = `usuarios/${slug}/index.html`;
-      } else {
-        showError('Tu cuenta está siendo configurada. Contactá al administrador.');
-        await signOut(auth);
-      }
+      // Todos os clientes vão para a mesma página dinâmica
+      window.location.href = 'usuarios/index.html';
     } else {
       showError('Tu cuenta no está registrada en el sistema. Contactá al administrador.');
       await signOut(auth);

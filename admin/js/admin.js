@@ -157,9 +157,9 @@ function renderUsersTable(){
       <td><a href="../usuarios/${u.slug}/index.html" target="_blank" class="user-page-link">🔗 Ver Página</a></td>
       <td>
         <div class="actions-cell">
-          <button class="btn btn-ghost btn-icon btn-sm" onclick="editUser('${u.id}')" title="Editar">✏️</button>
-          <button class="btn btn-ghost btn-icon btn-sm" onclick="togglePayment('${u.id}','${u.paymentStatus}')" title="Cambiar pago">💳</button>
-          <button class="btn btn-danger btn-icon btn-sm" onclick="confirmDeleteUser('${u.id}','${u.name}')" title="Eliminar">🗑️</button>
+          <button class="btn btn-ghost btn-icon btn-sm" onclick="editUser('${u.id}')" title="Editar usuario">✏️</button>
+          <button class="btn btn-ghost btn-icon btn-sm" onclick="togglePayment('${u.id}','${u.paymentStatus}')" title="Cambiar estado de pago">💳</button>
+          <button class="btn-delete" onclick="confirmDeleteUser('${u.id}','${u.name}')" title="Eliminar usuario">✕</button>
         </div>
       </td>
     </tr>`).join('');
