@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mi Área – HS Gestión</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!--
+    ⚠️ INSTRUCCIÓN PARA CREAR PÁGINA DE USUARIO:
+    1. Copiá esta carpeta "usuarios/" y creá una subcarpeta con el slug del usuario
+       Ej: usuarios/maria-garcia/index.html
+    2. Ajustá los paths de CSS y JS si es necesario (../../css/ etc.)
+    3. El contenido se carga automáticamente desde Firebase.
+    
+    ¡No necesitás editar el HTML de cada usuario! Todo se carga dinámicamente.
+  -->
+  <link rel="stylesheet" href="../css/user.css?v=1.0.0" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⭐</text></svg>" />
+</head>
+<body>
+
+  <!-- ── HEADER ── -->
+  <header class="user-header">
+    <div class="header-inner">
+      <div class="user-logo-wrap">
+        <!-- Logo del cliente (cargado por JS) -->
+        <img id="clientLogo" src="" alt="Logo del cliente" style="display:none;height:40px;width:auto;border-radius:8px;" />
+        <div id="clientLogoPlaceholder" style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#2563eb,#0ea5e9);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.1rem;">H</div>
+        <img src="../../images/logo.png" class="hs-logo" alt="HS Gestión" style="height:28px;opacity:.65;" />
+      </div>
+      <div>
+        <div class="header-greeting">Bienvenido/a a tu panel</div>
+        <div class="header-name" id="headerName">Cargando...</div>
+      </div>
+      <button id="logoutBtn" style="background:none;border:1px solid rgba(37,99,235,.25);color:var(--accent);padding:8px 16px;border-radius:50px;font-size:.82rem;font-weight:600;cursor:pointer;transition:var(--t);font-family:inherit;" onmouseover="this.style.background='rgba(37,99,235,.08)'" onmouseout="this.style.background='none'">
+        🚪 Salir
+      </button>
+    </div>
+  </header>
+
+  <!-- ── MAIN ── -->
+  <main class="user-main">
+
+    <!-- Bienvenida -->
+    <div class="welcome-card">
+      <div class="welcome-eyebrow">✨ Tu espacio personal</div>
+      <div class="welcome-name" id="welcomeName">¡Bienvenido/a!</div>
+      <div class="welcome-sub" id="welcomeService">
+        Aquí podés ver el estado de tu servicio, mensajes del equipo HS Gestión y tus contenidos.
+      </div>
+    </div>
+
+    <!-- Grid: pago + mensajes -->
+    <div class="grid-2">
+
+      <!-- Estado de pago -->
+      <div class="card">
+        <div class="card-title">💳 Estado del Servicio</div>
+        <div class="payment-status-wrap">
+          <div class="payment-big" id="paymentStatus">⏳</div>
+          <div class="payment-label open" id="paymentLabel">Cargando...</div>
+          <div class="payment-amount" id="paymentAmount"></div>
+          <div class="payment-service" id="paymentService"></div>
+          <div id="payBtnWrap"></div>
+        </div>
+      </div>
+
+      <!-- Mensajes -->
+      <div class="card">
+        <div class="card-title">📬 Mensajes de HS Gestión</div>
+        <div class="msg-list" id="messagesList">
+          <div class="empty-msg">Cargando mensajes...</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Packs de contenido -->
+    <div id="packsSection" style="display:none;">
+      <div class="card">
+        <div class="card-title">📦 Tu Contenido Exclusivo</div>
+        <div class="packs-grid" id="packsGrid"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── FOOTER ── -->
+  <footer class="user-footer">
+    <p>© 2025 <a href="../../index.html">HS Gestión</a> — Todos los derechos reservados.</p>
+    <p style="margin-top:6px;">¿Tenés alguna consulta? 
+      <a href="https://wa.me/5513981763452" target="_blank" rel="noopener">WhatsApp →</a>
+    </p>
+  </footer>
+
+  <!-- ── Firebase + JS ── -->
+  <script type="module" src="../js/user.js?v=1.0.0"></script>
+
+</body>
+</html>
