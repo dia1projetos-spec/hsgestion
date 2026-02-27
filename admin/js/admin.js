@@ -22,7 +22,7 @@ const auth = getAuth(app);
 const db   = getFirestore(app);
 
 // ⚠️ Coloque aqui o email exato que você usou para criar o admin no Firebase Auth
-const ADMIN_EMAIL = "admin@hsgestion.com.ar";
+const ADMIN_EMAIL = "riconetson@gmail.com";
 
 let allUsers = [], allMessages = [], allPacks = [];
 let confirmCallback = null, editingUserId = null;
@@ -72,34 +72,29 @@ function updateStats(){
   }
 }
 
-// AUTH
-$('#loginForm').addEventListener('submit',async e=>{
-  e.preventDefault();
-  const email=$('#loginEmail').value.trim();
-  const pass=$('#loginPassword').value;
-  const btn=$('#loginBtn');
-  btn.textContent='Entrando...';btn.disabled=true;
-  try{await signInWithEmailAndPassword(auth,email,pass);}
-  catch(err){toast('Credenciales incorrectas. Verificá tu email y contraseña.','error');btn.textContent='Iniciar Sesión';btn.disabled=false;}
+// AUTH — O login é feito no index.html principal
+// Aqui só verificamos se o usuário já está logado como admin
+$('#logoutBtn').addEventListener('click', () => {
+  signOut(auth).then(() => {
+    window.location.href = '../index.html';
+  });
 });
 
-$('#logoutBtn').addEventListener('click',()=>signOut(auth));
-
-onAuthStateChanged(auth,async user=>{
-  if(user&&user.email===ADMIN_EMAIL){
-    $('#loginScreen').style.display='none';
-    $('#adminApp').style.display='grid';
-    $('#adminEmailDisplay').textContent=user.email;
+onAuthStateChanged(auth, async user => {
+  if (user && user.email === ADMIN_EMAIL) {
+    // Admin logado — mostrar painel
+    $('#loginScreen').style.display = 'none';
+    $('#adminApp').style.display    = 'grid';
+    $('#adminEmailDisplay').textContent = user.email;
     await loadAll();
     navigateTo('dashboard');
-  }else if(user&&user.email!==ADMIN_EMAIL){
+  } else if (user && user.email !== ADMIN_EMAIL) {
+    // Cliente tentou acessar o admin — volta para sua página
     await signOut(auth);
-    toast('Acceso denegado. Solo el administrador puede ingresar aquí.','error');
-    $('#loginScreen').style.display='flex';
-    $('#adminApp').style.display='none';
-  }else{
-    $('#loginScreen').style.display='flex';
-    $('#adminApp').style.display='none';
+    window.location.href = '../index.html';
+  } else {
+    // Não logado — redirecionar para o login principal
+    window.location.href = '../index.html';
   }
 });
 

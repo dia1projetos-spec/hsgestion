@@ -16,25 +16,14 @@
      LOGIN SCREEN
 ════════════════════════════════════════════════════ -->
 <div id="loginScreen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);position:fixed;inset:0;z-index:9999;">
-  <div style="background:var(--panel);border:1px solid var(--border2);border-radius:var(--r2);padding:48px 40px;width:100%;max-width:400px;box-shadow:var(--shadow);margin:16px;">
-    <div style="text-align:center;margin-bottom:32px;">
-      <img src="../images/logo.png" alt="HS Gestión" style="height:52px;margin-bottom:16px;" />
-      <h1 style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:700;color:var(--white);margin-bottom:6px;">Panel Administrativo</h1>
-      <p style="color:var(--muted);font-size:.88rem;">Acceso exclusivo para administradores</p>
-    </div>
-    <form id="loginForm">
-      <div class="form-group">
-        <label for="loginEmail">Correo electrónico</label>
-        <input type="email" id="loginEmail" placeholder="admin@hsgestion.com.ar" required autocomplete="email" />
-      </div>
-      <div class="form-group">
-        <label for="loginPassword">Contraseña</label>
-        <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" />
-      </div>
-      <button id="loginBtn" type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;font-size:1rem;padding:13px;">
-        🔐 Iniciar Sesión
-      </button>
-    </form>
+  <div style="background:var(--panel);border:1px solid var(--border2);border-radius:var(--r2);padding:48px 40px;width:100%;max-width:400px;box-shadow:var(--shadow);margin:16px;text-align:center;">
+    <img src="../images/logo.png" alt="HS Gestión" style="height:52px;margin-bottom:20px;" />
+    <p style="color:var(--muted);font-size:.95rem;margin-bottom:24px;">Verificando acceso...</p>
+    <div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    <p style="color:var(--muted);font-size:.8rem;margin-top:20px;">
+      Si no sos redirigido, <a href="../index.html" style="color:var(--accent2);">hacé clic aquí para ir al login</a>
+    </p>
   </div>
 </div>
 

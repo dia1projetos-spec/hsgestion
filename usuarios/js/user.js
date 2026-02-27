@@ -22,7 +22,7 @@ const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
-const ADMIN_EMAIL = "admin@hsgestion.com.ar"; // ⚠️ mesmo do admin.js
+const ADMIN_EMAIL = "riconetson@gmail.com"; // ⚠️ mesmo do admin.js
 const ALIAS_PAGO  = "sofiacuello25";           // ⚠️ alias de pago
 
 // ── PACKS CATALOG (mesmo do admin.js — mantener sincronizado) ──────────────

@@ -92,8 +92,8 @@
       <div class="modal-logo">
         <img src="images/logo.png" alt="HS Gestión logo" loading="lazy" />
       </div>
-      <h2 class="modal-title">Área de Clientes</h2>
-      <p class="modal-sub">Accedé a tu panel de gestión personalizado</p>
+      <h2 class="modal-title">Iniciar Sesión</h2>
+      <p class="modal-sub">Administradores y clientes acceden aquí</p>
       <form id="loginForm" class="modal-form" novalidate>
         <div class="form-group">
           <label for="loginEmail">Correo electrónico</label>
@@ -103,12 +103,13 @@
           <label for="loginPass">Contraseña</label>
           <input type="password" id="loginPass" placeholder="••••••••" required autocomplete="current-password" />
         </div>
-        <button type="submit" class="btn-primary" style="width:100%;justify-content:center;margin-top:8px">
+        <button type="submit" id="loginSubmitBtn" class="btn-primary" style="width:100%;justify-content:center;margin-top:8px">
           Iniciar Sesión
         </button>
+        <div id="loginError" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;color:#f87171;font-size:.85rem;text-align:center;"></div>
       </form>
       <div class="modal-firebase-note">
-        🔐 Sistema de autenticación seguro — próximamente con Firebase
+        🔐 El sistema detecta automáticamente si sos administrador o cliente
       </div>
     </div>
   </div>
