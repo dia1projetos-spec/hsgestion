@@ -3,355 +3,255 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HS Gestión – Panel Admin</title>
-  <meta name="robots" content="noindex, nofollow" />
+  <title>HS Gestión – Admin</title>
+  <meta name="robots" content="noindex,nofollow" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="css/admin.css?v=1.2.0" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>" />
+  <link rel="stylesheet" href="css/admin.css?v=2.0.0" />
 </head>
 <body>
 
-<!-- ═══ PANTALLA LOGIN (spinner — redirige si no está logado) ═══ -->
-<div id="loginScreen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0b0f1a;position:fixed;inset:0;z-index:9999;">
-  <div style="text-align:center;padding:40px;">
-    <img src="../images/logo.png" alt="HS Gestión" style="height:52px;margin-bottom:24px;display:block;margin-left:auto;margin-right:auto;" />
-    <div style="width:36px;height:36px;border:3px solid #1e293b;border-top-color:#3b82f6;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;"></div>
-    <p style="color:#64748b;font-size:.88rem;">Verificando acceso...</p>
-    <p style="color:#475569;font-size:.78rem;margin-top:16px;">
-      <a href="../index.html" style="color:#60a5fa;">← Ir al login</a>
-    </p>
-    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
+  <div style="text-align:center;">
+    <img src="../images/logo.png" style="height:48px;margin-bottom:20px;display:block;margin-left:auto;margin-right:auto;" />
+    <div style="width:34px;height:34px;border:3px solid #21262d;border-top-color:#1f6feb;border-radius:50%;animation:sp 1s linear infinite;margin:0 auto 14px;"></div>
+    <p style="color:#484f58;font-size:.83rem;">Verificando acceso...</p>
+    <p style="margin-top:12px;"><a href="../index.html" style="color:#58a6ff;font-size:.78rem;">← Ir al login</a></p>
+    <style>@keyframes sp{to{transform:rotate(360deg)}}</style>
   </div>
 </div>
 
-<!-- ═══ APP ADMIN ═══ -->
+<!-- ADMIN APP -->
 <div id="adminApp" style="display:none;">
+  <div id="wrapper">
 
-  <!-- Overlay mobile -->
-  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <!-- SIDEBAR OVERLAY -->
+    <div class="sb-overlay" id="sbOverlay"></div>
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-      <img src="../images/logo.png" alt="HS Gestión" />
-      <span>HS Gestión</span>
-    </div>
-
-    <nav class="sidebar-nav">
-      <div class="sidebar-section">
-        <div class="sidebar-section-label">Principal</div>
-        <button class="nav-item active" data-section="dashboard">
-          <span class="icon">📊</span> Dashboard
-        </button>
-        <button class="nav-item" data-section="usuarios">
-          <span class="icon">👥</span> Usuarios
-          <span class="count-pill" id="userCountPill">0</span>
-        </button>
+    <!-- SIDEBAR -->
+    <aside id="sidebar">
+      <div class="sb-logo">
+        <img src="../images/logo.png" alt="HS" />
+        <span>HS Gestión</span>
       </div>
-      <div class="sidebar-section">
-        <div class="sidebar-section-label">Comunicación</div>
-        <button class="nav-item" data-section="mensajes">
-          <span class="icon">💬</span> Mensajes
-        </button>
-        <button class="nav-item" data-section="packs">
-          <span class="icon">📦</span> Packs de Contenido
-        </button>
-      </div>
-      <div class="sidebar-section">
-        <div class="sidebar-section-label">Cuenta</div>
-        <button class="nav-item danger" id="logoutBtn">
-          <span class="icon">🚪</span> Cerrar Sesión
-        </button>
-      </div>
-    </nav>
-
-    <div class="sidebar-footer">
-      <div class="admin-badge">
-        <div class="admin-avatar">A</div>
-        <div class="admin-info">
-          <span>Administrador</span>
-          <strong id="adminEmailDisplay">—</strong>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- MAIN -->
-  <div class="main">
-
-    <!-- TOPBAR -->
-    <div class="topbar">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <button class="menu-toggle" id="menuToggle">☰</button>
-        <span class="topbar-title" id="topbarTitle">Dashboard</span>
-      </div>
-      <div class="topbar-actions">
-        <button class="btn btn-ghost btn-sm" id="btnRefresh">🔄 Actualizar</button>
-      </div>
-    </div>
-
-    <!-- CONTENT -->
-    <div class="content">
-
-      <!-- ═══ DASHBOARD ═══ -->
-      <div class="page-section active" id="page-dashboard">
-
-        <div class="stats-row">
-          <div class="stat-card">
-            <div class="stat-icon">👥</div>
-            <div class="stat-label">Total Usuarios</div>
-            <div class="stat-value" id="statUsers">0</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">✅</div>
-            <div class="stat-label">Pagos Confirmados</div>
-            <div class="stat-value" id="statPaid">0</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">⏳</div>
-            <div class="stat-label">Pagos Pendientes</div>
-            <div class="stat-value" id="statOpen">0</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">📦</div>
-            <div class="stat-label">Packs Activos</div>
-            <div class="stat-value" id="statPacks">0</div>
+      <nav class="sb-nav">
+        <span class="sb-label">Principal</span>
+        <button class="sb-item active" data-pg="dashboard"><span class="ic">📊</span> Dashboard</button>
+        <button class="sb-item" data-pg="usuarios"><span class="ic">👥</span> Usuarios <span class="sb-pill" id="userPill">0</span></button>
+        <span class="sb-label">Comunicación</span>
+        <button class="sb-item" data-pg="mensajes"><span class="ic">💬</span> Mensajes</button>
+        <button class="sb-item" data-pg="packs"><span class="ic">📦</span> Packs</button>
+        <span class="sb-label">Cuenta</span>
+        <button class="sb-item danger" id="logoutBtn"><span class="ic">🚪</span> Cerrar Sesión</button>
+      </nav>
+      <div class="sb-footer">
+        <div class="sb-user">
+          <div class="sb-avatar">A</div>
+          <div class="sb-user-info">
+            <small>Administrador</small>
+            <span id="adminEmail">—</span>
           </div>
         </div>
+      </div>
+    </aside>
 
-        <div class="dash-grid">
-          <div class="dash-card">
-            <h3>⚡ Acciones Rápidas</h3>
-            <div style="display:flex;flex-direction:column;gap:10px;">
-              <button class="btn btn-primary" id="dashBtnNewUser">➕ Crear Nuevo Usuario</button>
-              <button class="btn btn-ghost"   id="dashBtnNewMsg">📨 Enviar Mensaje</button>
-              <button class="btn btn-ghost"   id="dashBtnPacks">📦 Gestionar Packs</button>
+    <!-- MAIN -->
+    <div id="mainWrap">
+      <div id="topbar">
+        <div style="display:flex;align-items:center;">
+          <button id="menuToggle">☰</button>
+          <span id="topbarTitle">Dashboard</span>
+        </div>
+        <button class="btn btn-gray btn-sm" id="btnRefresh">🔄 Actualizar</button>
+      </div>
+
+      <div id="content">
+
+        <!-- DASHBOARD -->
+        <div class="page active" id="pg-dashboard">
+          <div class="stats">
+            <div class="stat"><div class="stat-ic">👥</div><div class="stat-lbl">Usuarios</div><div class="stat-val" id="stUsers">0</div></div>
+            <div class="stat"><div class="stat-ic">✅</div><div class="stat-lbl">Pagados</div><div class="stat-val" id="stPaid">0</div></div>
+            <div class="stat"><div class="stat-ic">⏳</div><div class="stat-lbl">Pendientes</div><div class="stat-val" id="stOpen">0</div></div>
+            <div class="stat"><div class="stat-ic">📦</div><div class="stat-lbl">Packs</div><div class="stat-val" id="stPacks">0</div></div>
+          </div>
+          <div class="dash-row">
+            <div class="box">
+              <h3>⚡ Acciones Rápidas</h3>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <button class="btn btn-blue" id="dBtnUser">➕ Crear Nuevo Usuario</button>
+                <button class="btn btn-gray" id="dBtnMsg">📨 Enviar Mensaje</button>
+                <button class="btn btn-gray" id="dBtnPacks">📦 Ver Packs</button>
+              </div>
             </div>
-          </div>
-          <div class="dash-card">
-            <h3>📋 Últimos Usuarios</h3>
-            <div id="dashRecentUsers">
-              <p style="color:var(--muted);font-size:.85rem;">Cargando...</p>
+            <div class="box">
+              <h3>📋 Últimos Usuarios</h3>
+              <div id="dashRecent"><p style="color:#484f58;font-size:.83rem;">Cargando...</p></div>
             </div>
           </div>
         </div>
 
-      </div>
-
-      <!-- ═══ USUARIOS ═══ -->
-      <div class="page-section" id="page-usuarios">
-        <div class="section-header">
-          <h2>Gestión de Usuarios</h2>
-          <button class="btn btn-primary" id="btnNewUser">➕ Crear Usuario</button>
-        </div>
-        <div class="table-wrap">
-          <div class="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Usuario</th>
-                  <th>Servicio</th>
-                  <th>Valor</th>
-                  <th>Estado Pago</th>
-                  <th>Fecha</th>
-                  <th>Página</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="usersTableBody">
-                <tr><td colspan="7">
-                  <div class="empty-state">
-                    <span class="icon">👥</span>
-                    <p>Cargando usuarios...</p>
-                  </div>
-                </td></tr>
-              </tbody>
-            </table>
+        <!-- USUARIOS -->
+        <div class="page" id="pg-usuarios">
+          <div class="sec-header">
+            <h2>Gestión de Usuarios</h2>
+            <button class="btn btn-blue" id="btnNewUser">➕ Crear Usuario</button>
+          </div>
+          <div class="tbl-wrap">
+            <div class="tbl-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Usuario</th>
+                    <th>Servicio</th>
+                    <th>Valor</th>
+                    <th>Pago</th>
+                    <th>Fecha</th>
+                    <th>Página</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="usersBody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- ═══ MENSAJES ═══ -->
-      <div class="page-section" id="page-mensajes">
-        <div class="section-header">
-          <h2>Mensajes a Usuarios</h2>
-          <button class="btn btn-primary" id="btnNewMessage">📨 Nuevo Mensaje</button>
-        </div>
-        <div class="messages-list" id="messagesList">
-          <div class="empty-state"><span class="icon">💬</span><p>Cargando mensajes...</p></div>
-        </div>
-      </div>
-
-      <!-- ═══ PACKS ═══ -->
-      <div class="page-section" id="page-packs">
-        <div class="section-header">
-          <h2>Packs de Contenido</h2>
-        </div>
-        <div class="info-box">
-          📁 <strong>Cómo agregar packs:</strong> Colocá los archivos en
-          <code>packs/imagens/</code> o <code>packs/videos/</code> y editá el array
-          <code>PACKS_CATALOG</code> en <code>admin/js/admin.js</code>.
-          Después asigná el pack al usuario desde acá.
-        </div>
-        <div class="packs-grid" id="packsGrid">
-          <div class="empty-state" style="grid-column:1/-1">
-            <span class="icon">📦</span>
-            <p>No hay packs definidos aún</p>
+        <!-- MENSAJES -->
+        <div class="page" id="pg-mensajes">
+          <div class="sec-header">
+            <h2>Mensajes a Usuarios</h2>
+            <button class="btn btn-blue" id="btnNewMsg">📨 Nuevo Mensaje</button>
+          </div>
+          <div class="msg-list" id="msgList">
+            <div class="empty"><span class="empty-ic">💬</span><p>Sin mensajes aún</p></div>
           </div>
         </div>
-      </div>
 
-    </div><!-- /content -->
-  </div><!-- /main -->
+        <!-- PACKS -->
+        <div class="page" id="pg-packs">
+          <div class="sec-header"><h2>Packs de Contenido</h2></div>
+          <div class="info-box">
+            📁 <strong>Cómo agregar packs:</strong> Colocá los archivos en
+            <code>packs/imagens/</code> o <code>packs/videos/</code> y editá
+            el array <code>PACKS_CATALOG</code> en <code>admin/js/admin.js</code>.
+          </div>
+          <div class="packs-grid" id="packsGrid">
+            <div class="empty" style="grid-column:1/-1"><span class="empty-ic">📦</span><p>Sin packs aún</p></div>
+          </div>
+        </div>
+
+      </div><!-- /content -->
+    </div><!-- /mainWrap -->
+  </div><!-- /wrapper -->
 </div><!-- /adminApp -->
 
 
-<!-- ═══════════════════════════════════
-     MODALES
-═══════════════════════════════════ -->
+<!-- ═══ MODALES ═══ -->
 
-<!-- Modal: Crear/Editar Usuario -->
-<div class="modal-overlay" id="userModal">
+<!-- Modal Usuario -->
+<div class="modal-bg" id="mUser">
   <div class="modal modal-lg">
-    <div class="modal-header">
-      <h3 id="userModalTitle">Crear Nuevo Usuario</h3>
-      <button class="modal-close" data-close-modal>✕</button>
+    <div class="modal-hd">
+      <h3 id="mUserTitle">Crear Usuario</h3>
+      <button class="modal-x" data-close>✕</button>
     </div>
     <form id="userForm" autocomplete="off">
-      <div class="form-row">
-        <div class="form-group">
-          <label for="uName">Nombre completo *</label>
-          <input type="text" id="uName" placeholder="Ej: María García" required />
-        </div>
-        <div class="form-group">
-          <label for="uEmail">Email del usuario *</label>
-          <input type="email" id="uEmail" placeholder="cliente@email.com" required />
-        </div>
+      <div class="fr">
+        <div class="fg"><label>Nombre *</label><input type="text" id="uName" placeholder="Ej: María García" required /></div>
+        <div class="fg"><label>Email *</label><input type="email" id="uEmail" placeholder="cliente@email.com" required /></div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="uPassword">Contraseña (referencia)</label>
-          <input type="text" id="uPassword" placeholder="Para crear en Firebase Auth" />
-          <div class="form-hint">Guardá este dato para crear la cuenta en Firebase Console</div>
+      <div class="fr">
+        <div class="fg">
+          <label>Contraseña (referencia)</label>
+          <input type="text" id="uPassword" placeholder="Para Firebase Auth" />
+          <p class="hint">Guardá este dato para crear la cuenta en Firebase Console</p>
         </div>
-        <div class="form-group">
-          <label for="uService">Servicio contratado</label>
-          <input type="text" id="uService" placeholder="Ej: Diseño Web + Redes" />
-        </div>
+        <div class="fg"><label>Servicio contratado</label><input type="text" id="uService" placeholder="Ej: Diseño Web + Redes" /></div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="uValue">Valor del servicio ($)</label>
-          <input type="number" id="uValue" placeholder="Ej: 150000" min="0" />
-        </div>
-        <div class="form-group">
+      <div class="fr">
+        <div class="fg"><label>Valor del servicio ($)</label><input type="number" id="uValue" placeholder="Ej: 150000" min="0" /></div>
+        <div class="fg">
           <label>Estado de pago</label>
           <div class="radio-row">
-            <label class="radio-opt">
-              <input type="radio" name="payStatus" value="paid" /> ✅ Pagado
-            </label>
-            <label class="radio-opt">
-              <input type="radio" name="payStatus" value="open" checked /> ⏳ Pendiente
-            </label>
+            <label class="radio-opt"><input type="radio" name="pay" value="paid" /> ✅ Pagado</label>
+            <label class="radio-opt"><input type="radio" name="pay" value="open" checked /> ⏳ Pendiente</label>
           </div>
         </div>
       </div>
-      <div class="form-group">
-        <label for="uLogoFile">Archivo de logo</label>
-        <input type="text" id="uLogoFile" placeholder="Ej: maria-garcia.png" autocomplete="off" />
-        <div class="form-hint">
-          Colocá el archivo en <code>images/usuarios/</code> y escribí solo el nombre aquí.
-        </div>
-        <img id="logoPreview" src="" alt="Preview"
-          style="display:none;width:60px;height:60px;object-fit:cover;border-radius:10px;
-                 border:2px solid var(--border2);margin-top:10px;" />
+      <div class="fg">
+        <label>Archivo de logo</label>
+        <input type="text" id="uLogo" placeholder="Ej: maria.png" autocomplete="off" />
+        <p class="hint">Colocá el archivo en <code>images/usuarios/</code> y escribí solo el nombre.</p>
+        <img id="logoPreview" src="" alt="" style="display:none;width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #30363d;margin-top:8px;" />
       </div>
-
-      <!-- Aviso para crear en Firebase -->
-      <div id="firebaseReminder" style="display:none;margin-top:4px;padding:12px 14px;
-        background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);
-        border-radius:var(--r);font-size:.82rem;color:#fbbf24;line-height:1.6;">
+      <div class="firebase-tip" id="fbTip">
         ⚠️ <strong>Recordá crear la cuenta en Firebase Auth:</strong><br/>
-        <a href="https://console.firebase.google.com" target="_blank"
-           style="color:#fbbf24;font-weight:700;">
-          console.firebase.google.com
-        </a>
+        <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a>
         → Authentication → Users → Agregar usuario<br/>
-        Usá el mismo email y la contraseña que ingresaste arriba.
+        Usá el mismo email y la contraseña de arriba.
       </div>
-
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
-        <button type="button" class="btn btn-ghost" data-close-modal>Cancelar</button>
-        <button type="submit" class="btn btn-primary" id="saveUserBtn">💾 Guardar Usuario</button>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+        <button type="button" class="btn btn-gray" data-close>Cancelar</button>
+        <button type="submit" class="btn btn-blue" id="saveUserBtn">💾 Guardar</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- Modal: Nuevo Mensaje -->
-<div class="modal-overlay" id="messageModal">
+<!-- Modal Mensaje -->
+<div class="modal-bg" id="mMsg">
   <div class="modal">
-    <div class="modal-header">
-      <h3>📨 Nuevo Mensaje</h3>
-      <button class="modal-close" data-close-modal>✕</button>
-    </div>
-    <form id="messageForm">
-      <div class="form-group">
-        <label for="msgUserSelect">Destinatario</label>
-        <select id="msgUserSelect">
-          <option value="">📢 Todos los usuarios</option>
-        </select>
+    <div class="modal-hd"><h3>📨 Nuevo Mensaje</h3><button class="modal-x" data-close>✕</button></div>
+    <form id="msgForm">
+      <div class="fg">
+        <label>Para</label>
+        <select id="msgTo"><option value="">📢 Todos los usuarios</option></select>
       </div>
-      <div class="form-group">
-        <label for="msgText">Mensaje *</label>
-        <textarea id="msgText" placeholder="Escribí el mensaje acá..." required></textarea>
+      <div class="fg">
+        <label>Mensaje *</label>
+        <textarea id="msgTxt" placeholder="Escribí el mensaje acá..." required></textarea>
       </div>
-      <div style="display:flex;gap:10px;justify-content:flex-end;">
-        <button type="button" class="btn btn-ghost" data-close-modal>Cancelar</button>
-        <button type="submit" class="btn btn-primary" id="saveMsgBtn">📨 Enviar</button>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button type="button" class="btn btn-gray" data-close>Cancelar</button>
+        <button type="submit" class="btn btn-blue" id="saveMsgBtn">📨 Enviar</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- Modal: Asignar Pack -->
-<div class="modal-overlay" id="assignPackModal">
+<!-- Modal Asignar Pack -->
+<div class="modal-bg" id="mPack">
   <div class="modal">
-    <div class="modal-header">
-      <h3>📦 Asignar Pack</h3>
-      <button class="modal-close" data-close-modal>✕</button>
-    </div>
-    <form id="assignPackForm">
-      <input type="hidden" id="assignPackId" />
-      <div class="form-group">
-        <label for="packUserSelect">Seleccioná el usuario</label>
-        <select id="packUserSelect" required>
-          <option value="">— Seleccionar —</option>
-        </select>
+    <div class="modal-hd"><h3>📦 Asignar Pack</h3><button class="modal-x" data-close>✕</button></div>
+    <form id="packForm">
+      <input type="hidden" id="packId" />
+      <div class="fg">
+        <label>Usuario</label>
+        <select id="packTo" required><option value="">— Seleccionar —</option></select>
       </div>
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
-        <button type="button" class="btn btn-ghost" data-close-modal>Cancelar</button>
-        <button type="submit" class="btn btn-success">✅ Asignar</button>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+        <button type="button" class="btn btn-gray" data-close>Cancelar</button>
+        <button type="submit" class="btn btn-green">✅ Asignar</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- Modal: Confirmar -->
-<div class="modal-overlay" id="confirmModal">
-  <div class="modal confirm-dialog">
-    <span class="icon">⚠️</span>
-    <h3 style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;
-               color:var(--white);margin-bottom:10px;">¿Confirmás la acción?</h3>
-    <p id="confirmMessage"></p>
+<!-- Modal Confirmar -->
+<div class="modal-bg" id="mConfirm">
+  <div class="modal confirm-box">
+    <span class="ic">⚠️</span>
+    <h3 style="font-family:'Syne',sans-serif;font-size:.98rem;font-weight:700;color:#f0f6fc;margin-bottom:8px;">¿Confirmás?</h3>
+    <p id="confirmTxt"></p>
     <div class="btn-row">
-      <button class="btn btn-ghost" id="confirmCancel">Cancelar</button>
-      <button class="btn btn-danger" id="confirmOk">Sí, confirmar</button>
+      <button class="btn btn-gray" id="confirmNo">Cancelar</button>
+      <button class="btn btn-red"  id="confirmSi">Sí, confirmar</button>
     </div>
   </div>
 </div>
 
-<script type="module" src="js/admin.js?v=1.2.0"></script>
+<script type="module" src="js/admin.js?v=2.0.0"></script>
 </body>
 </html>
