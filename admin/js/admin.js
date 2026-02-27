@@ -110,6 +110,12 @@ function navigateTo(section){
   $('#sidebarOverlay').classList.remove('show');
 }
 $$('.nav-item[data-section]').forEach(item=>item.addEventListener('click',()=>navigateTo(item.dataset.section)));
+
+// Botões do dashboard
+document.getElementById('dashBtnNewUser')?.addEventListener('click',()=>{ navigateTo('usuarios'); setTimeout(()=>document.getElementById('btnNewUser')?.click(),100); });
+document.getElementById('dashBtnNewMsg')?.addEventListener('click', ()=>{ navigateTo('mensajes'); setTimeout(()=>document.getElementById('btnNewMessage')?.click(),100); });
+document.getElementById('dashBtnPacks')?.addEventListener('click', ()=>navigateTo('packs'));
+document.getElementById('btnRefresh')?.addEventListener('click',   ()=>loadAll());
 $('#menuToggle').addEventListener('click',()=>{$('#sidebar').classList.toggle('open');$('#sidebarOverlay').classList.toggle('show');});
 $('#sidebarOverlay').addEventListener('click',()=>{$('#sidebar').classList.remove('open');$('#sidebarOverlay').classList.remove('show');});
 
@@ -219,7 +225,8 @@ $('#userForm').addEventListener('submit',async e=>{
     if(!editingUserId){
       const uid=`u_${Date.now()}`;
       await setDoc(doc(db,'users',uid),{name,email,password,service,serviceValue:value,paymentStatus:payStatus,logoFile,slug,createdAt:serverTimestamp()});
-      toast(`✅ Usuario "${name}" creado! Recordá crear su cuenta en Firebase Auth también.`,'success');
+      toast(`✅ Usuario "${name}" creado!`,'success');
+      document.getElementById('firebaseReminder').style.display='block';
     }else{
       await updateDoc(doc(db,'users',editingUserId),{name,service,serviceValue:value,paymentStatus:payStatus,logoFile,slug});
       toast('✅ Usuario actualizado correctamente.','success');

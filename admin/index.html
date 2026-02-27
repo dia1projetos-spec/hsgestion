@@ -3,39 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HS Gestión – Panel Administrativo</title>
+  <title>HS Gestión – Panel Admin</title>
   <meta name="robots" content="noindex, nofollow" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="css/admin.css?v=1.0.0" />
+  <link rel="stylesheet" href="css/admin.css?v=1.2.0" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>" />
 </head>
 <body>
 
-<!-- ════════════════════════════════════════════════════
-     LOGIN SCREEN
-════════════════════════════════════════════════════ -->
-<div id="loginScreen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);position:fixed;inset:0;z-index:9999;">
-  <div style="background:var(--panel);border:1px solid var(--border2);border-radius:var(--r2);padding:48px 40px;width:100%;max-width:400px;box-shadow:var(--shadow);margin:16px;text-align:center;">
-    <img src="../images/logo.png" alt="HS Gestión" style="height:52px;margin-bottom:20px;" />
-    <p style="color:var(--muted);font-size:.95rem;margin-bottom:24px;">Verificando acceso...</p>
-    <div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div>
-    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-    <p style="color:var(--muted);font-size:.8rem;margin-top:20px;">
-      Si no sos redirigido, <a href="../index.html" style="color:var(--accent2);">hacé clic aquí para ir al login</a>
+<!-- ═══ PANTALLA LOGIN (spinner — redirige si no está logado) ═══ -->
+<div id="loginScreen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0b0f1a;position:fixed;inset:0;z-index:9999;">
+  <div style="text-align:center;padding:40px;">
+    <img src="../images/logo.png" alt="HS Gestión" style="height:52px;margin-bottom:24px;display:block;margin-left:auto;margin-right:auto;" />
+    <div style="width:36px;height:36px;border:3px solid #1e293b;border-top-color:#3b82f6;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;"></div>
+    <p style="color:#64748b;font-size:.88rem;">Verificando acceso...</p>
+    <p style="color:#475569;font-size:.78rem;margin-top:16px;">
+      <a href="../index.html" style="color:#60a5fa;">← Ir al login</a>
     </p>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════════════
-     ADMIN APP
-════════════════════════════════════════════════════ -->
-<div id="adminApp" style="display:none;" class="admin-layout">
+<!-- ═══ APP ADMIN ═══ -->
+<div id="adminApp" style="display:none;">
 
-  <!-- SIDEBAR OVERLAY (mobile) -->
+  <!-- Overlay mobile -->
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-  <!-- ── SIDEBAR ── -->
+  <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       <img src="../images/logo.png" alt="HS Gestión" />
@@ -45,7 +41,7 @@
     <nav class="sidebar-nav">
       <div class="sidebar-section">
         <div class="sidebar-section-label">Principal</div>
-        <button class="nav-item" data-section="dashboard">
+        <button class="nav-item active" data-section="dashboard">
           <span class="icon">📊</span> Dashboard
         </button>
         <button class="nav-item" data-section="usuarios">
@@ -81,24 +77,26 @@
     </div>
   </aside>
 
-  <!-- ── MAIN ── -->
+  <!-- MAIN -->
   <div class="main">
 
     <!-- TOPBAR -->
     <div class="topbar">
-      <div style="display:flex;align-items:center;gap:12px;">
+      <div style="display:flex;align-items:center;gap:10px;">
         <button class="menu-toggle" id="menuToggle">☰</button>
         <span class="topbar-title" id="topbarTitle">Dashboard</span>
       </div>
       <div class="topbar-actions">
-        <button class="btn btn-ghost btn-sm" onclick="loadAll()">🔄 Actualizar</button>
+        <button class="btn btn-ghost btn-sm" id="btnRefresh">🔄 Actualizar</button>
       </div>
     </div>
 
+    <!-- CONTENT -->
     <div class="content">
 
-      <!-- ════ DASHBOARD ════ -->
-      <div class="page-section" id="page-dashboard">
+      <!-- ═══ DASHBOARD ═══ -->
+      <div class="page-section active" id="page-dashboard">
+
         <div class="stats-row">
           <div class="stat-card">
             <div class="stat-icon">👥</div>
@@ -122,23 +120,26 @@
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:8px;">
-          <div class="table-wrap" style="padding:24px;">
-            <h3 style="font-family:'Syne',sans-serif;font-weight:700;color:var(--white);margin-bottom:16px;font-size:1rem;">⚡ Acciones Rápidas</h3>
+        <div class="dash-grid">
+          <div class="dash-card">
+            <h3>⚡ Acciones Rápidas</h3>
             <div style="display:flex;flex-direction:column;gap:10px;">
-              <button class="btn btn-primary" onclick="navigateTo('usuarios');$('#btnNewUser').click()">➕ Crear Nuevo Usuario</button>
-              <button class="btn btn-ghost" onclick="navigateTo('mensajes');$('#btnNewMessage').click()">📨 Enviar Mensaje</button>
-              <button class="btn btn-ghost" onclick="navigateTo('packs')">📦 Gestionar Packs</button>
+              <button class="btn btn-primary" id="dashBtnNewUser">➕ Crear Nuevo Usuario</button>
+              <button class="btn btn-ghost"   id="dashBtnNewMsg">📨 Enviar Mensaje</button>
+              <button class="btn btn-ghost"   id="dashBtnPacks">📦 Gestionar Packs</button>
             </div>
           </div>
-          <div class="table-wrap" style="padding:24px;">
-            <h3 style="font-family:'Syne',sans-serif;font-weight:700;color:var(--white);margin-bottom:16px;font-size:1rem;">📋 Últimos Usuarios</h3>
-            <div id="dashRecentUsers" style="display:flex;flex-direction:column;gap:10px;"></div>
+          <div class="dash-card">
+            <h3>📋 Últimos Usuarios</h3>
+            <div id="dashRecentUsers">
+              <p style="color:var(--muted);font-size:.85rem;">Cargando...</p>
+            </div>
           </div>
         </div>
+
       </div>
 
-      <!-- ════ USUARIOS ════ -->
+      <!-- ═══ USUARIOS ═══ -->
       <div class="page-section" id="page-usuarios">
         <div class="section-header">
           <h2>Gestión de Usuarios</h2>
@@ -146,45 +147,59 @@
         </div>
         <div class="table-wrap">
           <div class="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Usuario</th>
-                <th>Servicio</th>
-                <th>Valor</th>
-                <th>Estado de Pago</th>
-                <th>Fecha</th>
-                <th>Página</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="usersTableBody"></tbody>
-          </table>
+            <table>
+              <thead>
+                <tr>
+                  <th>Usuario</th>
+                  <th>Servicio</th>
+                  <th>Valor</th>
+                  <th>Estado Pago</th>
+                  <th>Fecha</th>
+                  <th>Página</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr><td colspan="7">
+                  <div class="empty-state">
+                    <span class="icon">👥</span>
+                    <p>Cargando usuarios...</p>
+                  </div>
+                </td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
 
-      <!-- ════ MENSAJES ════ -->
+      <!-- ═══ MENSAJES ═══ -->
       <div class="page-section" id="page-mensajes">
         <div class="section-header">
           <h2>Mensajes a Usuarios</h2>
           <button class="btn btn-primary" id="btnNewMessage">📨 Nuevo Mensaje</button>
         </div>
-        <div class="messages-list" id="messagesList"></div>
+        <div class="messages-list" id="messagesList">
+          <div class="empty-state"><span class="icon">💬</span><p>Cargando mensajes...</p></div>
+        </div>
       </div>
 
-      <!-- ════ PACKS ════ -->
+      <!-- ═══ PACKS ═══ -->
       <div class="page-section" id="page-packs">
         <div class="section-header">
           <h2>Packs de Contenido</h2>
-          <a href="../packs/" target="_blank" class="btn btn-ghost btn-sm">📁 Ver carpeta de packs</a>
         </div>
-        <div style="background:var(--panel);border:1px solid var(--border);border-radius:var(--r2);padding:20px;margin-bottom:22px;">
-          <p style="font-size:.88rem;color:var(--muted);line-height:1.8;">
-            📁 <strong style="color:var(--text);">Cómo agregar packs:</strong> Colocá tus archivos en <code style="color:var(--accent2);background:rgba(59,130,246,.1);padding:1px 5px;border-radius:4px;">packs/imagens/</code> o <code style="color:var(--accent2);background:rgba(59,130,246,.1);padding:1px 5px;border-radius:4px;">packs/videos/</code> y luego editá el array <strong style="color:var(--text);">PACKS_CATALOG</strong> en <code style="color:var(--accent2);background:rgba(59,130,246,.1);padding:1px 5px;border-radius:4px;">admin/js/admin.js</code>. Después asigná el pack al usuario correspondiente.
-          </p>
+        <div class="info-box">
+          📁 <strong>Cómo agregar packs:</strong> Colocá los archivos en
+          <code>packs/imagens/</code> o <code>packs/videos/</code> y editá el array
+          <code>PACKS_CATALOG</code> en <code>admin/js/admin.js</code>.
+          Después asigná el pack al usuario desde acá.
         </div>
-        <div class="packs-grid" id="packsGrid"></div>
+        <div class="packs-grid" id="packsGrid">
+          <div class="empty-state" style="grid-column:1/-1">
+            <span class="icon">📦</span>
+            <p>No hay packs definidos aún</p>
+          </div>
+        </div>
       </div>
 
     </div><!-- /content -->
@@ -192,9 +207,9 @@
 </div><!-- /adminApp -->
 
 
-<!-- ════════════════════════════════════════════════════
+<!-- ═══════════════════════════════════
      MODALES
-════════════════════════════════════════════════════ -->
+═══════════════════════════════════ -->
 
 <!-- Modal: Crear/Editar Usuario -->
 <div class="modal-overlay" id="userModal">
@@ -203,7 +218,7 @@
       <h3 id="userModalTitle">Crear Nuevo Usuario</h3>
       <button class="modal-close" data-close-modal>✕</button>
     </div>
-    <form id="userForm">
+    <form id="userForm" autocomplete="off">
       <div class="form-row">
         <div class="form-group">
           <label for="uName">Nombre completo *</label>
@@ -211,23 +226,23 @@
         </div>
         <div class="form-group">
           <label for="uEmail">Email del usuario *</label>
-          <input type="email" id="uEmail" placeholder="usuario@email.com" required />
+          <input type="email" id="uEmail" placeholder="cliente@email.com" required />
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label for="uPassword">Contraseña inicial</label>
-          <input type="text" id="uPassword" placeholder="Dejar en blanco si ya existe" />
-          <div class="form-hint">Solo para referencia — crear cuenta en Firebase Auth Console</div>
+          <label for="uPassword">Contraseña (referencia)</label>
+          <input type="text" id="uPassword" placeholder="Para crear en Firebase Auth" />
+          <div class="form-hint">Guardá este dato para crear la cuenta en Firebase Console</div>
         </div>
         <div class="form-group">
           <label for="uService">Servicio contratado</label>
-          <input type="text" id="uService" placeholder="Ej: Diseño Web + Redes Sociales" />
+          <input type="text" id="uService" placeholder="Ej: Diseño Web + Redes" />
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label for="uValue">Valor del servicio (ARS $)</label>
+          <label for="uValue">Valor del servicio ($)</label>
           <input type="number" id="uValue" placeholder="Ej: 150000" min="0" />
         </div>
         <div class="form-group">
@@ -243,18 +258,30 @@
         </div>
       </div>
       <div class="form-group">
-        <label for="uLogoFile">Nombre del archivo de logo</label>
+        <label for="uLogoFile">Archivo de logo</label>
         <input type="text" id="uLogoFile" placeholder="Ej: maria-garcia.png" autocomplete="off" />
         <div class="form-hint">
-          Colocá el archivo en <code>images/usuarios/</code> y escribí solo el nombre aquí. Ej: <code>maria.png</code>
+          Colocá el archivo en <code>images/usuarios/</code> y escribí solo el nombre aquí.
         </div>
-        <div style="margin-top:10px;display:flex;align-items:center;gap:12px;">
-          <img id="logoPreview" src="" alt="Preview"
-            style="display:none;width:64px;height:64px;object-fit:cover;border-radius:10px;border:2px solid var(--border2);" />
-          <span style="font-size:.8rem;color:var(--muted);">Vista previa automática</span>
-        </div>
+        <img id="logoPreview" src="" alt="Preview"
+          style="display:none;width:60px;height:60px;object-fit:cover;border-radius:10px;
+                 border:2px solid var(--border2);margin-top:10px;" />
       </div>
-      <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:8px;">
+
+      <!-- Aviso para crear en Firebase -->
+      <div id="firebaseReminder" style="display:none;margin-top:4px;padding:12px 14px;
+        background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);
+        border-radius:var(--r);font-size:.82rem;color:#fbbf24;line-height:1.6;">
+        ⚠️ <strong>Recordá crear la cuenta en Firebase Auth:</strong><br/>
+        <a href="https://console.firebase.google.com" target="_blank"
+           style="color:#fbbf24;font-weight:700;">
+          console.firebase.google.com
+        </a>
+        → Authentication → Users → Agregar usuario<br/>
+        Usá el mismo email y la contraseña que ingresaste arriba.
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
         <button type="button" class="btn btn-ghost" data-close-modal>Cancelar</button>
         <button type="submit" class="btn btn-primary" id="saveUserBtn">💾 Guardar Usuario</button>
       </div>
@@ -278,11 +305,11 @@
       </div>
       <div class="form-group">
         <label for="msgText">Mensaje *</label>
-        <textarea id="msgText" placeholder="Escribí el mensaje aquí..." required style="min-height:130px;"></textarea>
+        <textarea id="msgText" placeholder="Escribí el mensaje acá..." required></textarea>
       </div>
-      <div style="display:flex;gap:12px;justify-content:flex-end;">
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
         <button type="button" class="btn btn-ghost" data-close-modal>Cancelar</button>
-        <button type="submit" class="btn btn-primary" id="saveMsgBtn">📨 Enviar Mensaje</button>
+        <button type="submit" class="btn btn-primary" id="saveMsgBtn">📨 Enviar</button>
       </div>
     </form>
   </div>
@@ -292,7 +319,7 @@
 <div class="modal-overlay" id="assignPackModal">
   <div class="modal">
     <div class="modal-header">
-      <h3>📦 Asignar Pack a Usuario</h3>
+      <h3>📦 Asignar Pack</h3>
       <button class="modal-close" data-close-modal>✕</button>
     </div>
     <form id="assignPackForm">
@@ -300,22 +327,23 @@
       <div class="form-group">
         <label for="packUserSelect">Seleccioná el usuario</label>
         <select id="packUserSelect" required>
-          <option value="">— Seleccionar usuario —</option>
+          <option value="">— Seleccionar —</option>
         </select>
       </div>
-      <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:8px;">
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
         <button type="button" class="btn btn-ghost" data-close-modal>Cancelar</button>
-        <button type="submit" class="btn btn-success">✅ Asignar Pack</button>
+        <button type="submit" class="btn btn-success">✅ Asignar</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- Modal: Confirmación -->
+<!-- Modal: Confirmar -->
 <div class="modal-overlay" id="confirmModal">
   <div class="modal confirm-dialog">
-    <div class="icon">⚠️</div>
-    <h3 style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:var(--white);margin-bottom:12px;">¿Confirmás la acción?</h3>
+    <span class="icon">⚠️</span>
+    <h3 style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;
+               color:var(--white);margin-bottom:10px;">¿Confirmás la acción?</h3>
     <p id="confirmMessage"></p>
     <div class="btn-row">
       <button class="btn btn-ghost" id="confirmCancel">Cancelar</button>
@@ -324,22 +352,6 @@
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════════════
-     SCRIPTS FIREBASE + ADMIN (módulos ES)
-════════════════════════════════════════════════════ -->
-<script type="module" src="js/admin.js?v=1.0.0"></script>
-
-<!-- Dashboard recent users update -->
-<script>
-  // Função para atualizar o dashboard depois que os dados carregarem
-  window.addEventListener('load', ()=>{
-    setTimeout(()=>{
-      const dashRecent = document.getElementById('dashRecentUsers');
-      const userCountPill = document.getElementById('userCountPill');
-      // Será populado pelo admin.js após loadUsers()
-      // Monkeypatch do renderUsersTable para também atualizar dashboard
-    },1500);
-  });
-</script>
+<script type="module" src="js/admin.js?v=1.2.0"></script>
 </body>
 </html>
