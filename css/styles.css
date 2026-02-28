@@ -1195,6 +1195,16 @@ footer {
 
   .nav-cta { display: none; }
 
+  /* Botão login no final do menu mobile */
+  .nav-links::after {
+    content: '';
+  }
+  .mobile-login-btn {
+    display: flex !important;
+    margin-top: 16px;
+    width: 100%;
+  }
+
   .services-grid { grid-template-columns: 1fr; }
   .hero-content { grid-template-columns: 1fr; text-align: center; }
   .hero-image-frame { width: 280px; height: 280px; margin: 0 auto; }

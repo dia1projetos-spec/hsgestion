@@ -4,97 +4,132 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mi Área – HS Gestión</title>
-  <meta name="robots" content="noindex, nofollow" />
+  <meta name="robots" content="noindex,nofollow" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="css/user.css?v=1.2.0" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⭐</text></svg>" />
+  <link rel="stylesheet" href="css/user.css?v=3.0.0" />
 </head>
 <body>
 
   <!-- HEADER -->
   <header class="user-header">
     <div class="header-inner">
-      <div class="user-logo-wrap">
-        <img id="clientLogo" src="" alt="Logo" style="display:none;height:38px;width:auto;border-radius:8px;" />
-        <div id="clientLogoPlaceholder" style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#2563eb,#0ea5e9);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.1rem;font-family:sans-serif;">H</div>
-        <img src="../images/logo.png" alt="HS Gestión" style="height:26px;opacity:.6;margin-left:4px;" />
+      <div class="header-left">
+        <div class="client-ava" id="clientAva">H</div>
+        <div class="header-info">
+          <div class="header-label">Área Personal</div>
+          <div class="header-name" id="headerName">Cargando...</div>
+        </div>
       </div>
-      <div>
-        <div class="header-greeting">Tu área personal</div>
-        <div class="header-name" id="headerName">Cargando...</div>
+      <div class="hs-brand">
+        <img src="../images/logo.png" alt="HS" />
+        HS Gestión
       </div>
-      <button id="logoutBtn" style="background:none;border:1px solid rgba(37,99,235,.25);color:#2563eb;padding:7px 14px;border-radius:50px;font-size:.8rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;">
-        🚪 Salir
-      </button>
+      <button class="logout-btn" id="logoutBtn">Salir →</button>
     </div>
   </header>
 
   <!-- LOADING -->
-  <div id="loadingState" style="display:flex;align-items:center;justify-content:center;min-height:60vh;flex-direction:column;gap:16px;color:#64748b;">
-    <div style="width:40px;height:40px;border:3px solid #e2e8f0;border-top-color:#2563eb;border-radius:50%;animation:spin 1s linear infinite;"></div>
-    <p style="font-size:.9rem;">Cargando tu área...</p>
-    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+  <div id="loadingState">
+    <div class="loader-ring"></div>
+    <p class="loader-text">Cargando tu área...</p>
   </div>
 
-  <!-- MAIN (oculto até carregar) -->
+  <!-- ERROR -->
+  <div id="errorState">
+    <span class="err-icon">😕</span>
+    <p id="errorMsg">Error al cargar tu perfil.</p>
+    <a href="../index.html">← Volver al inicio</a>
+  </div>
+
+  <!-- MAIN -->
   <main class="user-main" id="mainContent" style="display:none;">
 
-    <!-- Bienvenida -->
-    <div class="welcome-card">
-      <div class="welcome-eyebrow">✨ Tu espacio personal</div>
-      <div class="welcome-name" id="welcomeName">¡Bienvenido/a!</div>
-      <div class="welcome-sub" id="welcomeService">
-        Aquí podés ver el estado de tu servicio, mensajes y contenido.
-      </div>
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-eyebrow">✦ Bienvenido/a de vuelta</div>
+      <h1 class="hero-title" id="heroTitle">Hola, <em>Cliente</em></h1>
+      <div class="hero-line"></div>
+      <p class="hero-sub" id="heroSub">Tu espacio exclusivo de gestión</p>
     </div>
 
-    <div class="grid-2">
+    <!-- TOP ROW: Relógio + Pagamento -->
+    <div class="top-row">
 
-      <!-- Estado de pago -->
+      <!-- Relógio -->
       <div class="card">
-        <div class="card-title">💳 Estado del Servicio</div>
-        <div class="payment-status-wrap">
-          <div class="payment-big" id="paymentStatus">⏳</div>
-          <div class="payment-label open" id="paymentLabel">Cargando...</div>
-          <div class="payment-amount" id="paymentAmount"></div>
-          <div class="payment-service" id="paymentService"></div>
-          <div id="payBtnWrap"></div>
+        <div class="card-label">⟡ Hora actual</div>
+        <div class="clock-display" id="clockTime">
+          <span id="ch">00</span><span class="colon">:</span><span id="cm">00</span><span class="colon">:</span><span id="cs">00</span>
+        </div>
+        <div class="clock-date" id="clockDate">—</div>
+      </div>
+
+      <!-- Pagamento -->
+      <div class="card">
+        <div class="card-label">⟡ Estado del servicio</div>
+        <div class="payment-status">
+          <div class="pay-icon open" id="payIcon">⏳</div>
+          <div>
+            <div class="pay-status-label" id="payLabel">Cargando...</div>
+            <div class="pay-amount" id="payAmount"></div>
+            <div class="pay-service" id="payService"></div>
+          </div>
+        </div>
+        <div id="payAction"></div>
+      </div>
+
+    </div>
+
+    <!-- BOTTOM ROW: Mensagens + Agenda -->
+    <div class="bottom-row">
+
+      <!-- Mensagens -->
+      <div class="card">
+        <div class="card-label">⟡ Mensajes</div>
+        <div class="msg-area" id="msgArea">
+          <div class="empty-msg">📭 Sin mensajes aún</div>
+        </div>
+        <div class="msg-input-wrap">
+          <textarea class="msg-input" id="msgInput" placeholder="Escribí tu mensaje..." rows="1"></textarea>
+          <button class="msg-send" id="msgSendBtn" title="Enviar">➤</button>
         </div>
       </div>
 
-      <!-- Mensajes -->
+      <!-- Agenda -->
       <div class="card">
-        <div class="card-title">📬 Mensajes de HS Gestión</div>
-        <div class="msg-list" id="messagesList">
-          <div class="empty-msg">Cargando mensajes...</div>
+        <div class="card-label">⟡ Mi agenda</div>
+        <div class="agenda-header">
+          <div class="agenda-nav">
+            <button id="agPrev">‹</button>
+            <span class="agenda-month" id="agMonth">ENE 2025</span>
+            <button id="agNext">›</button>
+          </div>
+        </div>
+        <div class="agenda-grid" id="agGrid"></div>
+        <div class="agenda-events" id="agEvents"></div>
+        <div class="add-event-wrap">
+          <input type="text" class="add-event-input" id="agInput" placeholder="Agregar evento al día seleccionado..." />
+          <button class="add-event-btn" id="agAddBtn">+ Agregar</button>
         </div>
       </div>
 
     </div>
 
-    <!-- Packs -->
-    <div id="packsSection" style="display:none;margin-top:20px;">
-      <div class="card">
-        <div class="card-title">📦 Tu Contenido Exclusivo</div>
-        <div class="packs-grid" id="packsGrid"></div>
-      </div>
+    <!-- PACKS -->
+    <div class="packs-section" id="packsSection" style="display:none;">
+      <h2 class="section-title">Contenido Exclusivo</h2>
+      <p class="section-sub">Archivos preparados especialmente para vos</p>
+      <div class="packs-grid" id="packsGrid"></div>
     </div>
 
   </main>
 
-  <!-- ERROR STATE -->
-  <div id="errorState" style="display:none;text-align:center;padding:60px 20px;color:#64748b;">
-    <p style="font-size:2.5rem;margin-bottom:16px;">😕</p>
-    <p id="errorMsg" style="font-size:.95rem;margin-bottom:20px;"></p>
-    <a href="../index.html" style="color:#2563eb;text-decoration:none;font-size:.9rem;">← Volver al inicio</a>
-  </div>
-
   <footer class="user-footer">
-    <p>© 2025 <a href="../index.html">HS Gestión</a> — Todos los derechos reservados.</p>
-    <p style="margin-top:6px;">¿Consultas? <a href="https://wa.me/5513981763452" target="_blank" rel="noopener">WhatsApp →</a></p>
+    © 2025 <a href="../index.html">HS Gestión</a> — Todos los derechos reservados.
+    &nbsp;·&nbsp; <a href="https://wa.me/5513981763452" target="_blank">Contacto →</a>
   </footer>
 
-  <script type="module" src="js/user.js?v=1.2.0"></script>
+  <script type="module" src="js/user.js?v=3.0.0"></script>
 </body>
 </html>

@@ -77,18 +77,52 @@
             <div class="stat"><div class="stat-ic">📦</div><div class="stat-lbl">Packs</div><div class="stat-val" id="stPacks">0</div></div>
           </div>
           <div class="dash-row">
-            <div class="box">
-              <h3>⚡ Acciones Rápidas</h3>
-              <div style="display:flex;flex-direction:column;gap:8px;">
-                <button class="btn btn-blue" id="dBtnUser">➕ Crear Nuevo Usuario</button>
-                <button class="btn btn-gray" id="dBtnMsg">📨 Enviar Mensaje</button>
-                <button class="btn btn-gray" id="dBtnPacks">📦 Ver Packs</button>
+
+            <!-- Coluna esquerda: Clock + Ações -->
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <!-- Relógio -->
+              <div class="box">
+                <div style="font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:#484f58;margin-bottom:10px;font-family:monospace;">⟡ Hora actual</div>
+                <div id="adminClock" style="font-family:'Courier New',monospace;font-size:2.2rem;font-weight:300;color:#f0f6fc;letter-spacing:4px;line-height:1;margin-bottom:4px;">00:00:00</div>
+                <div id="adminDate" style="font-size:.72rem;color:#484f58;font-family:monospace;letter-spacing:.5px;text-transform:uppercase;"></div>
+              </div>
+              <!-- Ações -->
+              <div class="box">
+                <h3>⚡ Acciones Rápidas</h3>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <button class="btn btn-blue" id="dBtnUser">➕ Crear Nuevo Usuario</button>
+                  <button class="btn btn-gray" id="dBtnMsg">📨 Enviar Mensaje</button>
+                  <button class="btn btn-gray" id="dBtnPacks">📦 Ver Packs</button>
+                </div>
               </div>
             </div>
-            <div class="box">
-              <h3>📋 Últimos Usuarios</h3>
-              <div id="dashRecent"><p style="color:#484f58;font-size:.83rem;">Cargando...</p></div>
+
+            <!-- Coluna direita: Últimos usuários + Agenda -->
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div class="box">
+                <h3>📋 Últimos Usuarios</h3>
+                <div id="dashRecent"><p style="color:#484f58;font-size:.83rem;">Cargando...</p></div>
+              </div>
+              <!-- Agenda Admin -->
+              <div class="box">
+                <h3>📅 Mi Agenda</h3>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <button id="adAgPrev" style="background:#0d1117;border:1px solid #21262d;color:#8b949e;width:24px;height:24px;border-radius:5px;cursor:pointer;font-size:.75rem;">‹</button>
+                    <span id="adAgMonth" style="font-size:.75rem;font-weight:700;color:#f0f6fc;font-family:monospace;letter-spacing:1px;text-transform:uppercase;"></span>
+                    <button id="adAgNext" style="background:#0d1117;border:1px solid #21262d;color:#8b949e;width:24px;height:24px;border-radius:5px;cursor:pointer;font-size:.75rem;">›</button>
+                  </div>
+                </div>
+                <div id="adAgGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
+                <div id="adAgEvents" style="margin-top:8px;max-height:80px;overflow-y:auto;"></div>
+                <div style="display:flex;gap:6px;margin-top:8px;">
+                  <input type="text" id="adAgInput" placeholder="Agregar evento..."
+                    style="flex:1;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:6px 10px;color:#c9d1d9;font-size:.75rem;outline:none;font-family:inherit;" />
+                  <button id="adAgAdd" class="btn btn-blue btn-sm">+ Add</button>
+                </div>
+              </div>
             </div>
+
           </div>
         </div>
 
@@ -121,11 +155,19 @@
         <!-- MENSAJES -->
         <div class="page" id="pg-mensajes">
           <div class="sec-header">
-            <h2>Mensajes a Usuarios</h2>
+            <h2>Mensajes</h2>
             <button class="btn btn-blue" id="btnNewMsg">📨 Nuevo Mensaje</button>
           </div>
-          <div class="msg-list" id="msgList">
+          <!-- Tabs -->
+          <div style="display:flex;gap:8px;margin-bottom:16px;">
+            <button class="btn btn-blue btn-sm" id="tabAdmin" onclick="switchMsgTab('admin')">📤 Enviados por vos</button>
+            <button class="btn btn-gray btn-sm" id="tabClient" onclick="switchMsgTab('client')">📥 De clientes <span id="clientMsgCount" style="background:#da3633;color:#fff;border-radius:20px;padding:1px 6px;font-size:.65rem;margin-left:4px;display:none;">0</span></button>
+          </div>
+          <div id="msgListAdmin" class="msg-list">
             <div class="empty"><span class="empty-ic">💬</span><p>Sin mensajes aún</p></div>
+          </div>
+          <div id="msgListClient" class="msg-list" style="display:none;">
+            <div class="empty"><span class="empty-ic">📥</span><p>Sin mensajes de clientes aún</p></div>
           </div>
         </div>
 

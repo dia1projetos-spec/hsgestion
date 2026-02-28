@@ -62,6 +62,9 @@ onAuthStateChanged(auth, async user => {
     get('adminApp').style.display    = 'block';
     get('adminEmail').textContent    = user.email;
     await loadAll();
+    startAdminClock();
+    initAdminAgenda();
+    loadClientMessages();
     goTo('dashboard');
   } else if (user) {
     await signOut(auth);
@@ -117,6 +120,96 @@ get('btnRefresh').addEventListener('click', loadAll);
 async function loadAll() {
   await Promise.all([loadUsers(), loadMessages(), loadPacks()]);
   updateStats();
+}
+
+// ── RELÓGIO ADMIN ────────────────────────────────────────────────────────────────
+function startAdminClock() {
+  const DIAS  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  function tick() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    const cl = get('adminClock'), dt = get('adminDate');
+    if(cl) cl.textContent = `${h}:${m}:${s}`;
+    if(dt) dt.textContent = `${DIAS[now.getDay()]}, ${now.getDate()} ${MESES[now.getMonth()]} ${now.getFullYear()}`;
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+// ── AGENDA ADMIN ──────────────────────────────────────────────────────────────
+function initAdminAgenda() {
+  const MONTHS_ES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+  const DAYS_ES   = ['D','L','M','M','J','V','S'];
+  const KEY = 'hs_admin_agenda';
+  let events = JSON.parse(localStorage.getItem(KEY)||'{}');
+  let vy = new Date().getFullYear(), vm = new Date().getMonth(), sel = null;
+
+  function save() { localStorage.setItem(KEY, JSON.stringify(events)); }
+
+  function renderCal() {
+    const gEl = get('adAgGrid'), mEl = get('adAgMonth');
+    if(!gEl||!mEl) return;
+    mEl.textContent = `${MONTHS_ES[vm]} ${vy}`;
+    const first = new Date(vy,vm,1).getDay();
+    const total = new Date(vy,vm+1,0).getDate();
+    const today = new Date();
+    let html = DAYS_ES.map(d=>`<div style="text-align:center;font-size:.55rem;color:#484f58;padding:2px 0;font-family:monospace;">${d}</div>`).join('');
+    for(let i=0;i<first;i++) html+=`<div></div>`;
+    for(let d=1;d<=total;d++){
+      const key=`${vy}-${String(vm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isT = d===today.getDate()&&vm===today.getMonth()&&vy===today.getFullYear();
+      const hasE = events[key]?.length>0;
+      const isSel = key===sel;
+      html+=`<div onclick="adSelDay('${key}')" style="
+        aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+        border-radius:4px;font-size:.65rem;cursor:pointer;
+        color:${isT?'#1f6feb':isSel?'#d29922':'#8b949e'};
+        background:${isSel?'rgba(210,153,34,.1)':'transparent'};
+        border:1px solid ${isT?'#1f6feb':'transparent'};
+        position:relative;
+      ">${d}${hasE?`<span style="position:absolute;bottom:2px;width:3px;height:3px;border-radius:50%;background:#d29922;"></span>`:''}</div>`;
+    }
+    gEl.innerHTML = html;
+    renderEvs();
+  }
+
+  function renderEvs() {
+    const el = get('adAgEvents');
+    if(!el) return;
+    if(!sel){el.innerHTML='<p style="font-size:.68rem;color:#484f58;">Seleccioná un día</p>';return;}
+    const evs = events[sel]||[];
+    el.innerHTML = evs.length
+      ? evs.map((ev,i)=>`<div style="display:flex;align-items:center;gap:6px;padding:3px 6px;background:rgba(210,153,34,.08);border-radius:4px;margin-bottom:3px;">
+          <span style="flex:1;font-size:.72rem;color:#c9d1d9;">${ev}</span>
+          <button onclick="adDelEv('${sel}',${i})" style="background:none;border:none;color:#484f58;cursor:pointer;font-size:.75rem;">✕</button>
+        </div>`).join('')
+      : `<p style="font-size:.68rem;color:#484f58;">Sin eventos el ${sel}</p>`;
+  }
+
+  window.adSelDay = key => { sel=key; renderCal(); };
+  window.adDelEv  = (key,i) => {
+    events[key].splice(i,1);
+    if(!events[key].length) delete events[key];
+    save(); renderCal();
+  };
+
+  get('adAgPrev')?.addEventListener('click',()=>{ if(vm===0){vm=11;vy--;}else vm--; renderCal(); });
+  get('adAgNext')?.addEventListener('click',()=>{ if(vm===11){vm=0;vy++;}else vm++; renderCal(); });
+  get('adAgAdd')?.addEventListener('click',()=>{
+    const txt=get('adAgInput')?.value.trim();
+    if(!txt)return;
+    if(!sel){alert('Seleccioná un día primero');return;}
+    if(!events[sel])events[sel]=[];
+    events[sel].push(txt);
+    save();
+    if(get('adAgInput'))get('adAgInput').value='';
+    renderCal();
+  });
+  get('adAgInput')?.addEventListener('keydown',e=>{if(e.key==='Enter')get('adAgAdd')?.click();});
+  renderCal();
 }
 
 // ── STATS ─────────────────────────────────────────────────────────────────────
@@ -317,7 +410,8 @@ async function loadMessages() {
 }
 
 function renderMessages() {
-  const el = get('msgList');
+  const el = get('msgListAdmin');
+  if(!el) return;
   if (!allMessages.length) {
     el.innerHTML = `<div class="empty"><span class="empty-ic">💬</span><p>Sin mensajes aún</p></div>`;
     return;
@@ -581,3 +675,65 @@ get('confirmNo').addEventListener('click', () => closeModal('mConfirm'));
 qsa('[data-close]').forEach(b => b.addEventListener('click', closeAll));
 qsa('.modal-bg').forEach(bg => bg.addEventListener('click', e => { if(e.target===bg) closeAll(); }));
 document.addEventListener('keydown', e => { if(e.key==='Escape') closeAll(); });
+
+// ── MENSAGENS DOS CLIENTES ────────────────────────────────────────────────────
+let clientMessages = [];
+
+async function loadClientMessages() {
+  try {
+    const snap = await getDocs(query(collection(db,'clientMessages'), orderBy('createdAt','desc')));
+    clientMessages = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderClientMessages();
+    // Badge de contagem
+    const count = get('clientMsgCount');
+    if(count && clientMessages.length > 0) {
+      count.textContent = clientMessages.length;
+      count.style.display = 'inline';
+    }
+  } catch(err) { console.error('Client msgs:', err); }
+}
+
+function renderClientMessages() {
+  const el = get('msgListClient');
+  if(!el) return;
+  if(!clientMessages.length) {
+    el.innerHTML = `<div class="empty"><span class="empty-ic">📥</span><p>Sin mensajes de clientes aún</p></div>`;
+    return;
+  }
+  el.innerHTML = clientMessages.map(m => {
+    const u = allUsers.find(x=>x.id===m.userId);
+    return `
+      <div class="msg-card">
+        <div class="msg-top">
+          <span class="msg-to">📥 ${m.userName || u?.name || 'Cliente'}</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="msg-date">${fmtDate(m.createdAt)}</span>
+            <button class="btn-x" onclick="askDeleteClientMsg('${m.id}')">✕</button>
+          </div>
+        </div>
+        <p class="msg-txt">${m.text}</p>
+      </div>`;
+  }).join('');
+}
+
+window.askDeleteClientMsg = mid =>
+  confirm('¿Eliminar este mensaje del cliente?', async () => {
+    await deleteDoc(doc(db,'clientMessages',mid));
+    toast('🗑️ Mensaje eliminado','success');
+    await loadClientMessages();
+  });
+
+// Tabs de mensagens
+window.switchMsgTab = tab => {
+  const admin  = get('msgListAdmin');
+  const client = get('msgListClient');
+  const btnA   = get('tabAdmin');
+  const btnC   = get('tabClient');
+  if(tab==='admin'){
+    admin.style.display='flex'; client.style.display='none';
+    btnA.className='btn btn-blue btn-sm'; btnC.className='btn btn-gray btn-sm';
+  } else {
+    admin.style.display='none'; client.style.display='flex';
+    btnA.className='btn btn-gray btn-sm'; btnC.className='btn btn-blue btn-sm';
+  }
+};
