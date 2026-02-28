@@ -118,7 +118,7 @@ get('btnRefresh').addEventListener('click', loadAll);
 
 // ── LOAD ALL ──────────────────────────────────────────────────────────────────
 async function loadAll() {
-  await Promise.all([loadUsers(), loadMessages(), loadPacks()]);
+  await Promise.all([loadUsers(), loadMessages(), loadPacks(), loadProjects()]);
   updateStats();
 }
 
@@ -411,7 +411,7 @@ async function loadMessages() {
 
 function renderMessages() {
   const el = get('msgListAdmin');
-  if(!el) return;
+  if(!el){const el2=get('msgList');if(el2&&allMessages.length)el2.innerHTML=allMessages.map(m=>`<div class='msg-card'><p class='msg-txt'>${m.text}</p></div>`).join('');return;}
   if (!allMessages.length) {
     el.innerHTML = `<div class="empty"><span class="empty-ic">💬</span><p>Sin mensajes aún</p></div>`;
     return;
@@ -681,7 +681,12 @@ let clientMessages = [];
 
 async function loadClientMessages() {
   try {
-    const snap = await getDocs(query(collection(db,'clientMessages'), orderBy('createdAt','desc')));
+    let snap;
+    try {
+      snap = await getDocs(query(collection(db,'clientMessages'), orderBy('createdAt','desc')));
+    } catch {
+      snap = await getDocs(collection(db,'clientMessages'));
+    }
     clientMessages = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderClientMessages();
     // Badge de contagem
@@ -737,3 +742,149 @@ window.switchMsgTab = tab => {
     btnA.className='btn btn-gray btn-sm'; btnC.className='btn btn-blue btn-sm';
   }
 };
+
+// ── PROYECTOS / PORTAFOLIO ────────────────────────────────────────────────────
+const CLOUD_NAME_PRJ    = "dc0bxgeea";
+const UPLOAD_PRESET_PRJ = "hs_gestion_packs"; // mesmo preset
+
+let allProjects = [], projectFilter = 'all';
+
+async function loadProjects() {
+  try {
+    let snap;
+    try { snap = await getDocs(query(collection(db,'projects'), orderBy('createdAt','desc'))); }
+    catch { snap = await getDocs(collection(db,'projects')); }
+    allProjects = snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(err) { console.error('Projects:', err); }
+  renderProjects();
+}
+
+function renderProjects() {
+  const el = get('projectsAdminGrid');
+  if(!el) return;
+  const filtered = projectFilter === 'all'
+    ? allProjects
+    : allProjects.filter(p => p.category === projectFilter);
+
+  if(!filtered.length) {
+    el.innerHTML = `<div class="empty" style="grid-column:1/-1"><span class="empty-ic">🗂️</span><p>Sin proyectos${projectFilter!=='all'?' en esta categoría':' aún'}.</p></div>`;
+    return;
+  }
+
+  const catLabel = { site:'🌐 Sitio Web', redes:'📱 Redes', convite:'✉️ Convite' };
+  el.innerHTML = filtered.map(p => `
+    <div class="pack-card">
+      <div class="pack-thumb" style="height:160px;">
+        <img src="${p.imageUrl}" alt="${p.title}" style="width:100%;height:100%;object-fit:cover;" />
+        <div style="position:absolute;top:8px;left:8px;">
+          <span class="badge badge-blue" style="font-size:.65rem;">${catLabel[p.category]||p.category}</span>
+        </div>
+      </div>
+      <div class="pack-body">
+        <div class="pack-name">${p.title}</div>
+        <div class="pack-desc">${p.description||''}</div>
+        <div class="pack-ft" style="margin-top:10px;">
+          ${p.link?`<a href="${p.link}" target="_blank" class="btn btn-gray btn-sm">🔗 Ver</a>`:'<span></span>'}
+          <button class="btn-x" onclick="askDeleteProject('${p.id}','${p.title.replace(/'/g,"\\'")}')">✕</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+window.filterProjects = filter => {
+  projectFilter = filter;
+  ['all','site','redes','convite'].forEach(f => {
+    const btn = get(`pf-${f}`);
+    if(btn) btn.className = `btn btn-sm ${f===filter?'btn-blue':'btn-gray'}`;
+  });
+  renderProjects();
+};
+
+// Preview de imagem antes de subir
+get('prjImage')?.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const preview = get('prjPreview');
+  const wrap    = get('prjPreviewWrap');
+  if(!preview || !wrap) return;
+  preview.src = URL.createObjectURL(file);
+  wrap.style.display = 'block';
+});
+
+// Abrir modal
+get('btnNewProject')?.addEventListener('click', () => {
+  get('projectForm')?.reset();
+  const wrap = get('prjPreviewWrap');
+  if(wrap) wrap.style.display='none';
+  if(get('prjProgress')) get('prjProgress').style.display='none';
+  openModal('mProject');
+});
+
+// Salvar projeto
+get('projectForm')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn   = get('saveProjectBtn');
+  const file  = get('prjImage')?.files[0];
+  if(!file) { toast('Seleccioná una imagen','error'); return; }
+
+  const title    = get('prjTitle')?.value.trim();
+  const category = get('prjCategory')?.value;
+  const desc     = get('prjDesc')?.value.trim();
+  const link     = get('prjLink')?.value.trim();
+
+  btn.textContent = 'Subiendo...'; btn.disabled = true;
+  if(get('prjProgress')) get('prjProgress').style.display='block';
+
+  try {
+    // Upload da imagem para Cloudinary
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', UPLOAD_PRESET_PRJ);
+    formData.append('folder', `hs-gestion/projects/${category}`);
+
+    const xhr = new XMLHttpRequest();
+    const uploadResult = await new Promise((resolve, reject) => {
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME_PRJ}/image/upload`);
+      xhr.upload.onprogress = ev => {
+        if(ev.lengthComputable) {
+          const pct = Math.round(ev.loaded/ev.total*100);
+          if(get('prjProgressBar')) get('prjProgressBar').style.width = pct+'%';
+          if(get('prjProgressTxt')) get('prjProgressTxt').textContent = `Subiendo... ${pct}%`;
+        }
+      };
+      xhr.onload = () => {
+        const res = JSON.parse(xhr.responseText);
+        if(xhr.status===200) resolve(res);
+        else reject(new Error(res.error?.message || 'Upload error'));
+      };
+      xhr.onerror = () => reject(new Error('Network error'));
+      xhr.send(formData);
+    });
+
+    // Salvar no Firestore
+    await setDoc(doc(collection(db,'projects')), {
+      title, category, description: desc, link: link||'',
+      imageUrl:   uploadResult.secure_url,
+      public_id:  uploadResult.public_id,
+      createdAt:  serverTimestamp()
+    });
+
+    toast(`✅ Proyecto "${title}" guardado!`, 'success');
+    closeModal('mProject');
+    await loadProjects();
+  } catch(err) {
+    console.error(err);
+    toast('Error: '+err.message, 'error');
+  } finally {
+    btn.textContent='☁️ Guardar Proyecto'; btn.disabled=false;
+    if(get('prjProgress')) get('prjProgress').style.display='none';
+  }
+});
+
+window.askDeleteProject = (pid, title) =>
+  confirm(`¿Eliminar el proyecto "${title}"?`, async () => {
+    await deleteDoc(doc(db,'projects',pid));
+    toast('🗑️ Proyecto eliminado','success');
+    await loadProjects();
+  });
+

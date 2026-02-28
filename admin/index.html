@@ -42,6 +42,7 @@
         <span class="sb-label">Comunicación</span>
         <button class="sb-item" data-pg="mensajes"><span class="ic">💬</span> Mensajes</button>
         <button class="sb-item" data-pg="packs"><span class="ic">📦</span> Packs</button>
+        <button class="sb-item" data-pg="proyectos"><span class="ic">🗂️</span> Proyectos</button>
         <span class="sb-label">Cuenta</span>
         <button class="sb-item danger" id="logoutBtn"><span class="ic">🚪</span> Cerrar Sesión</button>
       </nav>
@@ -179,6 +180,30 @@
           </div>
           <div class="packs-grid" id="packsGrid">
             <div class="empty" style="grid-column:1/-1"><span class="empty-ic">📦</span><p>Sin packs aún</p></div>
+          </div>
+        </div>
+
+        <!-- PROYECTOS -->
+        <div class="page" id="pg-proyectos">
+          <div class="sec-header">
+            <h2>Proyectos / Portafolio</h2>
+            <button class="btn btn-blue" id="btnNewProject">➕ Nuevo Proyecto</button>
+          </div>
+          <div class="info-box">
+            Los proyectos aparecen automáticamente en las páginas de servicio según la categoría elegida.
+            <br/>🌐 <a href="../servicos/sites.html" target="_blank" style="color:#58a6ff;">Ver página Sitios Web</a>
+            &nbsp;·&nbsp; 📱 <a href="../servicos/redes.html" target="_blank" style="color:#f87171;">Ver página Redes</a>
+            &nbsp;·&nbsp; ✉️ <a href="../servicos/convites.html" target="_blank" style="color:#34d399;">Ver página Convites</a>
+          </div>
+          <!-- Filtros -->
+          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+            <button class="btn btn-blue btn-sm"  onclick="filterProjects('all')"     id="pf-all">Todos</button>
+            <button class="btn btn-gray btn-sm"  onclick="filterProjects('site')"    id="pf-site">🌐 Sitios Web</button>
+            <button class="btn btn-gray btn-sm"  onclick="filterProjects('redes')"   id="pf-redes">📱 Redes</button>
+            <button class="btn btn-gray btn-sm"  onclick="filterProjects('convite')" id="pf-convite">✉️ Convites</button>
+          </div>
+          <div class="packs-grid" id="projectsAdminGrid">
+            <div class="empty" style="grid-column:1/-1"><span class="empty-ic">🗂️</span><p>Sin proyectos aún. Hacé clic en "Nuevo Proyecto".</p></div>
           </div>
         </div>
 
@@ -333,6 +358,58 @@
       <button class="btn btn-gray" id="confirmNo">Cancelar</button>
       <button class="btn btn-red"  id="confirmSi">Sí, confirmar</button>
     </div>
+  </div>
+</div>
+
+<!-- Modal Nuevo Proyecto -->
+<div class="modal-bg" id="mProject">
+  <div class="modal modal-lg">
+    <div class="modal-hd"><h3 id="mProjectTitle">➕ Nuevo Proyecto</h3><button class="modal-x" data-close>✕</button></div>
+    <form id="projectForm" autocomplete="off">
+      <div class="fr">
+        <div class="fg">
+          <label>Título del proyecto *</label>
+          <input type="text" id="prjTitle" placeholder="Ej: Sitio para Restaurante Bella" required/>
+        </div>
+        <div class="fg">
+          <label>Categoría *</label>
+          <select id="prjCategory" required>
+            <option value="">— Seleccionar —</option>
+            <option value="site">🌐 Sitio Web</option>
+            <option value="redes">📱 Redes Sociales</option>
+            <option value="convite">✉️ Convite Digital</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Descripción</label>
+        <input type="text" id="prjDesc" placeholder="Breve descripción del proyecto"/>
+      </div>
+      <div class="fg">
+        <label>Link del proyecto</label>
+        <input type="url" id="prjLink" placeholder="https://..."/>
+        <p class="hint">URL para que el visitante pueda ver el proyecto completo</p>
+      </div>
+      <div class="fg">
+        <label>Imagen del proyecto *</label>
+        <input type="file" id="prjImage" accept="image/*" required/>
+        <p class="hint">Imagen nítida del proyecto. Recomendado: 1200×800px o más.</p>
+        <div id="prjPreviewWrap" style="display:none;margin-top:10px;">
+          <img id="prjPreview" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;border:1px solid #21262d;"/>
+        </div>
+      </div>
+      <!-- Upload progress -->
+      <div id="prjProgress" style="display:none;margin-top:8px;">
+        <div style="background:#0d1117;border-radius:6px;height:6px;overflow:hidden;margin-bottom:6px;">
+          <div id="prjProgressBar" style="height:100%;background:linear-gradient(90deg,#1f6feb,#0ea5e9);width:0%;transition:width .3s;border-radius:6px;"></div>
+        </div>
+        <p id="prjProgressTxt" style="font-size:.72rem;color:#484f58;">Subiendo imagen...</p>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+        <button type="button" class="btn btn-gray" data-close>Cancelar</button>
+        <button type="submit" class="btn btn-blue" id="saveProjectBtn">☁️ Guardar Proyecto</button>
+      </div>
+    </form>
   </div>
 </div>
 

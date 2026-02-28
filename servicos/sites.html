@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Creación de Sitios Web – HS Gestión</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="servico-template.css?v=1.0.0"/>
+  <style>:root{--c1:#6366f1;--c2:#8b5cf6;--grad:linear-gradient(135deg,#6366f1,#8b5cf6);--glow:rgba(99,102,241,.18);}</style>
+</head>
+<body>
+<nav>
+  <a href="../index.html" class="nav-logo"><img src="../images/logo.png" alt="HS"/><span>HS Gestión</span></a>
+  <div class="nav-links">
+    <a href="redes.html">Redes Sociales</a>
+    <a href="convites.html">Convites Digitales</a>
+    <a href="../index.html#contacto" class="nav-cta">Quiero mi sitio →</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div>
+    <div class="hero-badge">🌐 Diseño &amp; Desarrollo Web</div>
+    <h1 class="hero-title">Sitios web que<br/><em>impresionan</em><br/>y convierten</h1>
+    <p class="hero-sub">Tu presencia digital diseñada desde cero. Rápida, responsiva y creada para convertir visitantes en clientes reales.</p>
+    <div class="hero-actions">
+      <a href="../index.html#contacto" class="btn-grad">Quiero mi sitio →</a>
+      <a href="#proyectos" class="btn-outline-c">Ver proyectos</a>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <span class="eyebrow">✦ Lo que incluye</span>
+    <h2 class="section-title">Todo lo que necesitás<br/><em>en un solo servicio</em></h2>
+    <p class="section-sub">Cada sitio es único, diseñado específicamente para tu negocio y tu audiencia.</p>
+    <div class="features-grid">
+      <div class="feature-card"><span class="feature-icon">🎨</span><div class="feature-title">Diseño a medida</div><div class="feature-desc">Sin templates genéricos. Diseñado desde cero pensando en tu marca y tu cliente ideal.</div></div>
+      <div class="feature-card"><span class="feature-icon">📱</span><div class="feature-title">100% Responsivo</div><div class="feature-desc">Perfecto en celular, tablet y desktop. Más del 70% del tráfico hoy viene del móvil.</div></div>
+      <div class="feature-card"><span class="feature-icon">⚡</span><div class="feature-title">Ultra rápido</div><div class="feature-desc">Optimizado para velocidad. Google premia los sitios rápidos con mejor posicionamiento.</div></div>
+      <div class="feature-card"><span class="feature-icon">🔍</span><div class="feature-title">SEO incluido</div><div class="feature-desc">Configuración base de SEO para que Google pueda encontrarte y mostrarte a tus clientes.</div></div>
+      <div class="feature-card"><span class="feature-icon">🛡️</span><div class="feature-title">Seguro y estable</div><div class="feature-desc">Certificado SSL, hosting confiable y mantenimiento para que tu sitio siempre esté online.</div></div>
+      <div class="feature-card"><span class="feature-icon">🚀</span><div class="feature-title">Entrega rápida</div><div class="feature-desc">Tu sitio listo en tiempo récord. Con revisiones incluidas hasta quedar perfecto.</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="proyectos" style="background:rgba(255,255,255,.015);border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05);">
+  <div class="container">
+    <span class="eyebrow">✦ Portafolio</span>
+    <h2 class="section-title">Proyectos <em>realizados</em></h2>
+    <p class="section-sub">Trabajo real, resultados reales. Estos son algunos de nuestros proyectos más recientes.</p>
+    <div class="projects-grid" id="projectsGrid">
+      <div class="projects-loading"><div style="width:32px;height:32px;border:2px solid rgba(255,255,255,.1);border-top-color:#6366f1;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px;"></div><p>Cargando proyectos...</p><style>@keyframes spin{to{transform:rotate(360deg)}}</style></div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <div class="container">
+    <h2 class="cta-title">¿Listo para tener<br/>tu sitio profesional?</h2>
+    <p class="cta-sub">Cotización sin compromiso — respondemos en menos de 24hs</p>
+    <a href="../index.html#contacto" class="btn-grad">Hablar con nosotros →</a>
+  </div>
+</section>
+
+<footer>© 2025 <a href="../index.html">HS Gestión</a> — Todos los derechos reservados.</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getFirestore, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+const db = getFirestore(initializeApp({apiKey:"AIzaSyDmMP5ZCfl9JfkQQf1xIfcGAei_BPLvKj8",authDomain:"hs-gestion-a102e.firebaseapp.com",projectId:"hs-gestion-a102e",storageBucket:"hs-gestion-a102e.firebasestorage.app",messagingSenderId:"40828198084",appId:"1:40828198084:web:70dd328e4e242925727d91"}));
+async function load() {
+  const grid = document.getElementById('projectsGrid');
+  try {
+    let snap; try { snap = await getDocs(query(collection(db,'projects'),where('category','==','site'),orderBy('createdAt','desc'))); } catch { snap = await getDocs(query(collection(db,'projects'),where('category','==','site'))); }
+    const ps = snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(!ps.length){grid.innerHTML=`<div class="empty-projects">✨ Proyectos próximamente</div>`;return;}
+    grid.innerHTML = ps.map(p=>`
+      <a href="${p.link||'#'}" target="_blank" rel="noopener" class="project-card">
+        <div class="project-img"><img src="${p.imageUrl}" alt="${p.title}" loading="lazy"/><div class="project-img-overlay"></div><span class="project-tag">Sitio Web</span><div class="project-arrow">→</div></div>
+        <div class="project-body"><div class="project-name">${p.title}</div><div class="project-desc">${p.description||''}</div>${p.link?`<div class="project-link">🔗 Ver proyecto →</div>`:''}</div>
+      </a>`).join('');
+  } catch(e) { grid.innerHTML=`<div class="empty-projects">✨ Proyectos próximamente</div>`; }
+}
+load();
+</script>
+</body>
+</html>

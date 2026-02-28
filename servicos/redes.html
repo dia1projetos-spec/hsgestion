@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Gestión de Redes Sociales – HS Gestión</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="servico-template.css?v=1.0.0"/>
+  <style>:root{--c1:#f43f5e;--c2:#fb923c;--grad:linear-gradient(135deg,#f43f5e,#fb923c);--glow:rgba(244,63,94,.18);}</style>
+</head>
+<body>
+<nav>
+  <a href="../index.html" class="nav-logo"><img src="../images/logo.png" alt="HS"/><span>HS Gestión</span></a>
+  <div class="nav-links">
+    <a href="sites.html">Sitios Web</a>
+    <a href="convites.html">Convites Digitales</a>
+    <a href="../index.html#contacto" class="nav-cta">Quiero gestión →</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div>
+    <div class="hero-badge">📱 Social Media Management</div>
+    <h1 class="hero-title">Redes sociales que<br/><em>generan ventas</em><br/>de verdad</h1>
+    <p class="hero-sub">Gestionamos tu Instagram, Facebook y más para que vos te concentrés en tu negocio mientras nosotros hacemos crecer tu comunidad.</p>
+    <div class="hero-actions">
+      <a href="../index.html#contacto" class="btn-grad">Quiero gestión →</a>
+      <a href="#proyectos" class="btn-outline-c">Ver trabajos</a>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <span class="eyebrow">✦ Lo que incluye</span>
+    <h2 class="section-title">Gestión completa<br/><em>sin que muevas un dedo</em></h2>
+    <p class="section-sub">Nos encargamos de todo el contenido para que tus redes siempre estén activas y profesionales.</p>
+    <div class="features-grid">
+      <div class="feature-card"><span class="feature-icon">📸</span><div class="feature-title">Contenido visual</div><div class="feature-desc">Diseño de posts, stories y reels con estética coherente y profesional para tu marca.</div></div>
+      <div class="feature-card"><span class="feature-icon">✍️</span><div class="feature-title">Copy persuasivo</div><div class="feature-desc">Textos pensados para conectar con tu audiencia y llevar a la acción de compra.</div></div>
+      <div class="feature-card"><span class="feature-icon">📅</span><div class="feature-title">Calendario editorial</div><div class="feature-desc">Planificación mensual de contenido con frecuencia consistente y estratégica.</div></div>
+      <div class="feature-card"><span class="feature-icon">📊</span><div class="feature-title">Reportes mensuales</div><div class="feature-desc">Métricas claras: alcance, interacciones, seguidores nuevos y conversiones.</div></div>
+      <div class="feature-card"><span class="feature-icon">💬</span><div class="feature-title">Gestión de mensajes</div><div class="feature-desc">Atención a comentarios y DMs para mantener tu comunidad activa y satisfecha.</div></div>
+      <div class="feature-card"><span class="feature-icon">🎯</span><div class="feature-title">Estrategia de crecimiento</div><div class="feature-desc">Acciones concretas para llegar a más personas de tu público objetivo.</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="proyectos" style="background:rgba(255,255,255,.015);border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05);">
+  <div class="container">
+    <span class="eyebrow">✦ Portafolio</span>
+    <h2 class="section-title">Cuentas que <em>gestionamos</em></h2>
+    <p class="section-sub">Resultados reales de clientes reales.</p>
+    <div class="projects-grid" id="projectsGrid">
+      <div class="projects-loading"><div style="width:32px;height:32px;border:2px solid rgba(255,255,255,.1);border-top-color:#f43f5e;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px;"></div><p>Cargando proyectos...</p><style>@keyframes spin{to{transform:rotate(360deg)}}</style></div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <div class="container">
+    <h2 class="cta-title">¿Querés que tus redes<br/>trabajen para vos?</h2>
+    <p class="cta-sub">Hablemos sobre tu negocio y armamos una estrategia a medida</p>
+    <a href="../index.html#contacto" class="btn-grad">Empezar ahora →</a>
+  </div>
+</section>
+
+<footer>© 2025 <a href="../index.html">HS Gestión</a> — Todos los derechos reservados.</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getFirestore, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+const db = getFirestore(initializeApp({apiKey:"AIzaSyDmMP5ZCfl9JfkQQf1xIfcGAei_BPLvKj8",authDomain:"hs-gestion-a102e.firebaseapp.com",projectId:"hs-gestion-a102e",storageBucket:"hs-gestion-a102e.firebasestorage.app",messagingSenderId:"40828198084",appId:"1:40828198084:web:70dd328e4e242925727d91"}));
+async function load() {
+  const grid = document.getElementById('projectsGrid');
+  try {
+    let snap; try { snap = await getDocs(query(collection(db,'projects'),where('category','==','redes'),orderBy('createdAt','desc'))); } catch { snap = await getDocs(query(collection(db,'projects'),where('category','==','redes'))); }
+    const ps = snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(!ps.length){grid.innerHTML=`<div class="empty-projects">✨ Proyectos próximamente</div>`;return;}
+    grid.innerHTML = ps.map(p=>`
+      <a href="${p.link||'#'}" target="_blank" rel="noopener" class="project-card">
+        <div class="project-img"><img src="${p.imageUrl}" alt="${p.title}" loading="lazy"/><div class="project-img-overlay"></div><span class="project-tag">Redes Sociales</span><div class="project-arrow">→</div></div>
+        <div class="project-body"><div class="project-name">${p.title}</div><div class="project-desc">${p.description||''}</div>${p.link?`<div class="project-link">🔗 Ver perfil →</div>`:''}</div>
+      </a>`).join('');
+  } catch(e) { grid.innerHTML=`<div class="empty-projects">✨ Proyectos próximamente</div>`; }
+}
+load();
+</script>
+</body>
+</html>
