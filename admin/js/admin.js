@@ -201,9 +201,12 @@ function renderUsers() {
 }
 
 function fillSelects() {
-  const opts = `<option value="">📢 Todos los usuarios</option>` +
+  const optsAll = `<option value="">📢 Todos los usuarios</option>` +
     allUsers.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
-  ['msgTo','packTo'].forEach(id => { if(get(id)) get(id).innerHTML = opts; });
+  const optsNone = `<option value="">— Todos / Elegir después —</option>` +
+    allUsers.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+  if(get('msgTo'))  get('msgTo').innerHTML  = optsAll;
+  if(get('packTo')) get('packTo').innerHTML = optsNone;
 }
 
 // Criar/Editar
@@ -363,52 +366,82 @@ async function deleteMsg(mid) {
   await loadMessages();
 }
 
-// ── PACKS ─────────────────────────────────────────────────────────────────────
-// ════════════════════════════════════════════════════════════
-// ⚡ Editá este array para agregar tus packs
-// Archivos en: packs/imagens/  y  packs/videos/
-// ════════════════════════════════════════════════════════════
-const PACKS_CATALOG = [
-  // {
-  //   id: "pack-redes-enero",
-  //   title: "Pack Redes – Enero",
-  //   description: "15 imágenes para redes sociales.",
-  //   type: "images",
-  //   thumb: "../packs/imagens/redes-enero/thumb.jpg",
-  //   files: ["../packs/imagens/redes-enero/foto1.jpg"]
-  // },
-];
+// ── PACKS (Cloudinary) ───────────────────────────────────────────────────────────
+
+// Credenciais Cloudinary
+const CLOUD_NAME   = "mediaflows_9428ae2d-2a04-45b1-82AD-c4523d2f4356";
+const UPLOAD_PRESET = "hs_gestion_packs"; // unsigned preset — criar no Cloudinary Dashboard
+
+async function uploadToCloudinary(file, onProgress) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', UPLOAD_PRESET);
+  formData.append('folder', 'hs-gestion/packs');
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`);
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100));
+    };
+    xhr.onload = () => {
+      const res = JSON.parse(xhr.responseText);
+      if (xhr.status === 200) resolve(res);
+      else reject(new Error(res.error?.message || 'Upload falhou'));
+    };
+    xhr.onerror = () => reject(new Error('Erro de rede'));
+    xhr.send(formData);
+  });
+}
 
 async function loadPacks() {
-  const snap = await getDocs(collection(db,'packAssignments'));
-  const assigns = snap.docs.map(d=>({id:d.id,...d.data()}));
-  allPacks = PACKS_CATALOG.map(p=>({...p, assigns: assigns.filter(a=>a.packId===p.id)}));
+  try {
+    const snap = await getDocs(query(collection(db,'packs'), orderBy('createdAt','desc')));
+    allPacks = snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch {
+    const snap = await getDocs(collection(db,'packs'));
+    allPacks = snap.docs.map(d=>({id:d.id,...d.data()}));
+  }
   renderPacks();
 }
 
 function renderPacks() {
   const el = get('packsGrid');
-  if (!PACKS_CATALOG.length) {
-    el.innerHTML = `<div class="empty" style="grid-column:1/-1"><span class="empty-ic">📦</span><p>Editá <code>PACKS_CATALOG</code> en admin.js para agregar packs</p></div>`;
+  if (!allPacks.length) {
+    el.innerHTML = `<div class="empty" style="grid-column:1/-1"><span class="empty-ic">📦</span><p>Sin packs aún. Hacé clic en "Nuevo Pack".</p></div>`;
     return;
   }
   el.innerHTML = allPacks.map(p => {
-    const who = p.assigns.map(a=>allUsers.find(u=>u.id===a.userId)?.name||a.userId).join(', ')||'Sin asignar';
+    const assignedNames = (p.assignedTo || [])
+      .map(uid => allUsers.find(u=>u.id===uid)?.name || uid)
+      .join(', ') || 'Sin asignar';
+    const thumb = p.files?.[0];
+    const isVideo = thumb?.resource_type === 'video';
     return `
       <div class="pack-card">
         <div class="pack-thumb">
-          ${p.type==='images'
-            ? `<img src="${p.thumb}" onerror="this.style.display='none'" />`
-            : `<video src="${p.files[0]}" muted></video>`}
+          ${thumb
+            ? isVideo
+              ? `<video src="${thumb.url}" muted style="width:100%;height:100%;object-fit:cover;"></video>`
+              : `<img src="${thumb.url}" style="width:100%;height:100%;object-fit:cover;" />`
+            : '📦'}
+          <div style="position:absolute;top:7px;left:7px;">
+            <span class="badge ${isVideo?'badge-blue':'badge-green'}" style="font-size:.65rem;">
+              ${isVideo?'🎬 Video':'🖼️ Imagen'}
+            </span>
+          </div>
+          <div style="position:absolute;top:7px;right:7px;background:rgba(0,0,0,.6);color:#fff;border-radius:20px;padding:2px 7px;font-size:.68rem;font-weight:700;">
+            ${p.files?.length || 0} archivo${p.files?.length!==1?'s':''}
+          </div>
         </div>
         <div class="pack-body">
           <div class="pack-name">${p.title}</div>
-          <div class="pack-desc">${p.description}</div>
+          <div class="pack-desc">${p.description || ''}</div>
           <div class="pack-ft">
-            <span class="pack-who">👤 ${who}</span>
+            <span class="pack-who">👤 ${assignedNames}</span>
             <div style="display:flex;gap:5px;">
-              <button class="btn btn-blue btn-sm" onclick="openAssign('${p.id}')">Asignar</button>
-              <button class="btn-x" onclick="askUnassign('${p.id}')">✕</button>
+              <button class="btn btn-blue btn-sm" onclick="openAssignModal('${p.id}')">Asignar</button>
+              <button class="btn-x" onclick="askDeletePack('${p.id}','${p.title.replace(/'/g,"\'")}')">✕</button>
             </div>
           </div>
         </div>
@@ -416,30 +449,129 @@ function renderPacks() {
   }).join('');
 }
 
-window.openAssign = pid => { get('packId').value = pid; openModal('mPack'); };
+// Preview de arquivos selecionados
+get('pFiles').addEventListener('change', e => {
+  const files = [...e.target.files];
+  const preview = get('filePreview');
+  const grid = get('previewGrid');
+  if (!files.length) { preview.style.display='none'; return; }
+  preview.style.display = 'block';
+  grid.innerHTML = files.map(f => {
+    const url = URL.createObjectURL(f);
+    const isVideo = f.type.startsWith('video');
+    return `<div style="border-radius:6px;overflow:hidden;height:70px;background:#0d1117;border:1px solid #21262d;">
+      ${isVideo
+        ? `<video src="${url}" style="width:100%;height:100%;object-fit:cover;" muted></video>`
+        : `<img src="${url}" style="width:100%;height:100%;object-fit:cover;" />`}
+    </div>`;
+  }).join('');
+});
+
+// Novo Pack
+get('btnNewPack').addEventListener('click', () => {
+  get('packForm').reset();
+  get('previewGrid').innerHTML = '';
+  get('filePreview').style.display = 'none';
+  get('uploadProgress').style.display = 'none';
+  openModal('mPack');
+});
 
 get('packForm').addEventListener('submit', async e => {
   e.preventDefault();
-  const pid = get('packId').value;
-  const uid = get('packTo').value;
+  const btn   = get('savePackBtn');
+  const files = [...get('pFiles').files];
+  if (!files.length) { toast('Seleccioná al menos un archivo','error'); return; }
+
+  const title  = get('pTitle').value.trim();
+  const desc   = get('pDesc').value.trim();
+  const userId = get('packTo').value;
+
+  btn.textContent = 'Subiendo...'; btn.disabled = true;
+  get('uploadProgress').style.display = 'block';
+
+  try {
+    const uploaded = [];
+    for (let i=0; i<files.length; i++) {
+      const pct = Math.round(i/files.length*100);
+      get('progressBar').style.width = pct+'%';
+      get('progressTxt').textContent = `Subiendo ${i+1} de ${files.length}...`;
+      const res = await uploadToCloudinary(files[i], p => {
+        const overall = Math.round((i + p/100) / files.length * 100);
+        get('progressBar').style.width = overall+'%';
+      });
+      uploaded.push({
+        url:           res.secure_url,
+        public_id:     res.public_id,
+        resource_type: res.resource_type,
+        format:        res.format,
+        bytes:         res.bytes
+      });
+    }
+
+    get('progressBar').style.width = '100%';
+    get('progressTxt').textContent = 'Guardando en base de datos...';
+
+    // Salvar no Firestore
+    const packRef = doc(collection(db,'packs'));
+    await setDoc(packRef, {
+      title, description: desc,
+      files: uploaded,
+      assignedTo: userId ? [userId] : [],
+      createdAt: serverTimestamp()
+    });
+
+    toast(`✅ Pack "${title}" creado con ${uploaded.length} archivo(s)!`, 'success');
+    closeModal('mPack');
+    await loadPacks();
+    updateStats();
+  } catch(err) {
+    console.error(err);
+    toast('Error al subir: ' + err.message, 'error');
+  } finally {
+    btn.textContent = '☁️ Subir y Guardar'; btn.disabled = false;
+    get('uploadProgress').style.display = 'none';
+  }
+});
+
+// Asignar pack a usuario
+function fillAssignSelect() {
+  const opts = `<option value="">— Seleccionar usuario —</option>` +
+    allUsers.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+  if(get('assignTo')) get('assignTo').innerHTML = opts;
+}
+
+window.openAssignModal = pid => {
+  get('assignPackId').value = pid;
+  fillAssignSelect();
+  openModal('mAssign');
+};
+
+get('assignForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const pid = get('assignPackId').value;
+  const uid = get('assignTo').value;
   if (!uid) { toast('Seleccioná un usuario','error'); return; }
   try {
-    await setDoc(doc(db,'packAssignments',`${pid}_${uid}`), {
-      packId:pid, userId:uid, assignedAt:serverTimestamp()
-    });
-    toast('✅ Pack asignado','success');
-    closeModal('mPack');
+    const pack = allPacks.find(p=>p.id===pid);
+    const current = pack?.assignedTo || [];
+    if (current.includes(uid)) { toast('Este usuario ya tiene este pack','info'); return; }
+    await updateDoc(doc(db,'packs',pid), { assignedTo: [...current, uid] });
+    toast('✅ Pack asignado!', 'success');
+    closeModal('mAssign');
     await loadPacks();
   } catch(err) { toast('Error: '+err.message,'error'); }
 });
 
-window.askUnassign = pid =>
-  confirm('¿Quitar todas las asignaciones de este pack?', async () => {
-    const snap = await getDocs(query(collection(db,'packAssignments'),where('packId','==',pid)));
-    for (const d of snap.docs) await deleteDoc(d.ref);
-    toast('🗑️ Asignaciones eliminadas','success');
+window.askDeletePack = (pid, title) =>
+  confirm(`¿Eliminar el pack "${title}"? Los archivos en Cloudinary serán desvinculados.`, () => deletePack(pid));
+
+async function deletePack(pid) {
+  try {
+    await deleteDoc(doc(db,'packs',pid));
+    toast('🗑️ Pack eliminado','success');
     await loadPacks();
-  });
+  } catch(err) { toast('Error: '+err.message,'error'); }
+}
 
 // ── CONFIRM ───────────────────────────────────────────────────────────────────
 get('confirmSi').addEventListener('click', () => { closeModal('mConfirm'); confirmCb?.(); });

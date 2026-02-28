@@ -27,24 +27,7 @@ const db   = getFirestore(app);
 const dateStr = ts =>
   ts?.toDate ? ts.toDate().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
 
-// ════════════════════════════════════════════════════════════
-// ⚡ PACKS DE CONTEÚDO — edite aqui e também em admin/js/admin.js
-// Coloque os arquivos em: packs/imagens/  e  packs/videos/
-// ════════════════════════════════════════════════════════════
-const PACKS_CATALOG = [
-  // Exemplo (apague e coloque os seus):
-  // {
-  //   id: "pack-redes-enero",
-  //   title: "Pack Redes Sociales – Enero",
-  //   description: "15 imágenes para Instagram y Facebook.",
-  //   type: "images",
-  //   thumb: "../packs/imagens/redes-enero/thumb.jpg",
-  //   files: [
-  //     "../packs/imagens/redes-enero/foto1.jpg",
-  //     "../packs/imagens/redes-enero/foto2.jpg",
-  //   ]
-  // },
-];
+// Packs carregados do Firestore/Cloudinary — sem catálogo manual necessário
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 onAuthStateChanged(auth, async user => {
@@ -85,12 +68,11 @@ async function loadUserData(user) {
       .filter(m => m.userId === userData.id || m.userId === 'all');
     renderMessages(messages);
 
-    // Carregar packs atribuídos
+    // Carregar packs atribuídos (do Firestore/Cloudinary)
     const packsSnap = await getDocs(
-      query(collection(db, 'packAssignments'), where('userId', '==', userData.id))
+      query(collection(db, 'packs'), where('assignedTo', 'array-contains', userData.id))
     );
-    const assignedIds = packsSnap.docs.map(d => d.data().packId);
-    const myPacks = PACKS_CATALOG.filter(p => assignedIds.includes(p.id));
+    const myPacks = packsSnap.docs.map(d => ({id:d.id,...d.data()}));
     renderPacks(myPacks);
 
     // Mostrar conteúdo
@@ -191,24 +173,31 @@ function renderPacks(packs) {
   const grid    = document.getElementById('packsGrid');
   if (!packs.length) { section.style.display = 'none'; return; }
   section.style.display = 'block';
-  grid.innerHTML = packs.map(p => `
-    <div class="pack-item">
-      <div class="pack-thumb">
-        ${p.type === 'images'
-          ? `<img src="${p.thumb}" alt="${p.title}" onerror="this.style.display='none'" />`
-          : `<video src="${p.files[0]}" muted style="width:100%;height:100%;object-fit:cover;"></video>`}
-      </div>
-      <div class="pack-body">
-        <div class="pack-name">${p.title}</div>
-        <div class="pack-desc">${p.description}</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          ${p.files.map((f, i) => `
-            <a href="${f}" download target="_blank" class="pack-download">
-              ⬇️ ${p.type === 'images' ? `Foto ${i+1}` : `Video ${i+1}`}
-            </a>`).join('')}
+  grid.innerHTML = packs.map(p => {
+    const files = p.files || [];
+    const thumb = files[0];
+    const isVideo = thumb?.resource_type === 'video';
+    return `
+      <div class="pack-item">
+        <div class="pack-thumb">
+          ${thumb
+            ? isVideo
+              ? `<video src="${thumb.url}" muted style="width:100%;height:100%;object-fit:cover;"></video>`
+              : `<img src="${thumb.url}" style="width:100%;height:100%;object-fit:cover;" />`
+            : '📦'}
         </div>
-      </div>
-    </div>`).join('');
+        <div class="pack-body">
+          <div class="pack-name">${p.title}</div>
+          <div class="pack-desc">${p.description || ''}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+            ${files.map((f, i) => `
+              <a href="${f.url}" download target="_blank" class="pack-download">
+                ⬇️ ${f.resource_type==='video' ? `Video ${i+1}` : `Foto ${i+1}`}
+              </a>`).join('')}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 function showError(msg) {

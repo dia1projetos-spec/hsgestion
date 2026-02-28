@@ -131,11 +131,9 @@
 
         <!-- PACKS -->
         <div class="page" id="pg-packs">
-          <div class="sec-header"><h2>Packs de Contenido</h2></div>
-          <div class="info-box">
-            📁 <strong>Cómo agregar packs:</strong> Colocá los archivos en
-            <code>packs/imagens/</code> o <code>packs/videos/</code> y editá
-            el array <code>PACKS_CATALOG</code> en <code>admin/js/admin.js</code>.
+          <div class="sec-header">
+            <h2>Packs de Contenido</h2>
+            <button class="btn btn-blue" id="btnNewPack">➕ Nuevo Pack</button>
           </div>
           <div class="packs-grid" id="packsGrid">
             <div class="empty" style="grid-column:1/-1"><span class="empty-ic">📦</span><p>Sin packs aún</p></div>
@@ -221,15 +219,59 @@
   </div>
 </div>
 
-<!-- Modal Asignar Pack -->
+<!-- Modal Nuevo Pack -->
 <div class="modal-bg" id="mPack">
-  <div class="modal">
-    <div class="modal-hd"><h3>📦 Asignar Pack</h3><button class="modal-x" data-close>✕</button></div>
-    <form id="packForm">
-      <input type="hidden" id="packId" />
+  <div class="modal modal-lg">
+    <div class="modal-hd"><h3 id="mPackTitle">📦 Nuevo Pack</h3><button class="modal-x" data-close>✕</button></div>
+    <form id="packForm" autocomplete="off">
+      <div class="fr">
+        <div class="fg">
+          <label>Título del pack *</label>
+          <input type="text" id="pTitle" placeholder="Ej: Pack Redes Enero" required />
+        </div>
+        <div class="fg">
+          <label>Asignar a</label>
+          <select id="packTo"><option value="">— Todos / Elegir después —</option></select>
+        </div>
+      </div>
       <div class="fg">
-        <label>Usuario</label>
-        <select id="packTo" required><option value="">— Seleccionar —</option></select>
+        <label>Descripción</label>
+        <input type="text" id="pDesc" placeholder="Ej: 10 imágenes para redes sociales" />
+      </div>
+      <div class="fg">
+        <label>Archivos (imágenes o videos) *</label>
+        <input type="file" id="pFiles" multiple accept="image/*,video/*" required />
+        <p class="hint">Podés subir múltiples archivos a la vez. Imágenes y videos.</p>
+      </div>
+      <!-- Progress -->
+      <div id="uploadProgress" style="display:none;margin-top:8px;">
+        <div style="background:#0d1117;border-radius:6px;height:8px;overflow:hidden;margin-bottom:6px;">
+          <div id="progressBar" style="height:100%;background:linear-gradient(90deg,#1f6feb,#0ea5e9);width:0%;transition:width .3s;border-radius:6px;"></div>
+        </div>
+        <p id="progressTxt" style="font-size:.75rem;color:#484f58;">Subiendo archivos...</p>
+      </div>
+      <!-- Preview -->
+      <div id="filePreview" style="display:none;margin-top:10px;">
+        <p style="font-size:.72rem;color:#484f58;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Vista previa</p>
+        <div id="previewGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;"></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+        <button type="button" class="btn btn-gray" data-close>Cancelar</button>
+        <button type="submit" class="btn btn-blue" id="savePackBtn">☁️ Subir y Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Asignar Pack a usuario -->
+<div class="modal-bg" id="mAssign">
+  <div class="modal">
+    <div class="modal-hd"><h3>👤 Asignar Pack</h3><button class="modal-x" data-close>✕</button></div>
+    <form id="assignForm">
+      <input type="hidden" id="assignPackId" />
+      <div class="fg">
+        <label>Asignar a</label>
+        <select id="assignTo" required><option value="">— Seleccionar usuario —</option></select>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
         <button type="button" class="btn btn-gray" data-close>Cancelar</button>
