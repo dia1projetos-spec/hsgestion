@@ -118,7 +118,7 @@ get('btnRefresh').addEventListener('click', loadAll);
 
 // ── LOAD ALL ──────────────────────────────────────────────────────────────────
 async function loadAll() {
-  await Promise.all([loadUsers(), loadMessages(), loadPacks(), loadProjects()]);
+  await Promise.all([loadUsers(), loadMessages(), loadPacks(), loadProjects(), loadPosts()]);
   updateStats();
 }
 
@@ -888,3 +888,193 @@ window.askDeleteProject = (pid, title) =>
     await loadProjects();
   });
 
+
+// ── BLOG / ARTÍCULOS ──────────────────────────────────────────────────────────
+const CLOUD_NAME_BLOG    = "dc0bxgeea";
+const UPLOAD_PRESET_BLOG = "hs_gestion_packs";
+
+const CATS_BLOG = {
+  'diseño-web': '🌐 Diseño Web',
+  'redes':      '📱 Redes Sociales',
+  'convites':   '✉️ Convites',
+  'tips':       '💡 Tips',
+  'novedades':  '🔔 Novedades'
+};
+
+let allPosts = [];
+let editingPostId = null;
+
+async function loadPosts() {
+  try {
+    let snap;
+    try { snap = await getDocs(query(collection(db,'blogPosts'), orderBy('createdAt','desc'))); }
+    catch { snap = await getDocs(collection(db,'blogPosts')); }
+    allPosts = snap.docs.map(d=>({id:d.id,...d.data()}));
+    allPosts.sort((a,b)=>{
+      const ta = a.createdAt?.toDate?.()?.getTime?.() || 0;
+      const tb = b.createdAt?.toDate?.()?.getTime?.() || 0;
+      return tb - ta;
+    });
+  } catch(err) { console.error('Posts:', err); }
+  renderPostsAdmin();
+}
+
+function fmtDateAdmin(ts) {
+  if(!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
+function renderPostsAdmin() {
+  const el = get('postsAdminGrid');
+  if(!el) return;
+  if(!allPosts.length) {
+    el.innerHTML = `<div class="empty"><span class="empty-ic">✍️</span><p>Sin artículos aún.</p></div>`;
+    return;
+  }
+  el.innerHTML = allPosts.map(p => `
+    <div class="pack-card">
+      <div class="pack-thumb" style="height:130px;">
+        ${p.imageUrl
+          ? `<img src="${p.imageUrl}" alt="${p.title}" style="width:100%;height:100%;object-fit:cover;"/>`
+          : `<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:2rem;">✍️</div>`}
+        <div style="position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap;">
+          <span class="badge ${p.published?'badge-green':'badge-red'}">${p.published?'✅ Publicado':'📝 Borrador'}</span>
+          ${p.category?`<span class="badge badge-blue" style="font-size:.6rem;">${CATS_BLOG[p.category]||p.category}</span>`:''}
+        </div>
+      </div>
+      <div class="pack-body">
+        <div class="pack-name" style="font-size:.85rem;">${p.title}</div>
+        <div class="pack-desc">${fmtDateAdmin(p.createdAt)}</div>
+        ${p.excerpt?`<div class="pack-desc" style="margin-top:2px;">${p.excerpt.substring(0,80)}${p.excerpt.length>80?'...':''}</div>`:''}
+        <div class="pack-ft" style="margin-top:10px;">
+          <button class="btn btn-gray btn-sm" onclick="editPost('${p.id}')">✏️ Editar</button>
+          <button class="btn-x" onclick="askDeletePost('${p.id}','${p.title.replace(/'/g,"\\'")}')">✕</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// Abrir modal novo artigo
+get('btnNewPost')?.addEventListener('click', () => {
+  editingPostId = null;
+  get('postForm')?.reset();
+  if(get('mPostTitle')) get('mPostTitle').textContent = '✍️ Nuevo Artículo';
+  if(get('savePostBtn')) get('savePostBtn').textContent = '☁️ Guardar Artículo';
+  if(get('postImgPreviewWrap')) get('postImgPreviewWrap').style.display='none';
+  if(get('postUploadProgress')) get('postUploadProgress').style.display='none';
+  openModal('mPost');
+});
+
+// Editar artigo existente
+window.editPost = id => {
+  const p = allPosts.find(x=>x.id===id);
+  if(!p) return;
+  editingPostId = id;
+  if(get('mPostTitle')) get('mPostTitle').textContent = '✏️ Editar Artículo';
+  if(get('savePostBtn')) get('savePostBtn').textContent = '💾 Actualizar';
+  if(get('postTitle'))     get('postTitle').value     = p.title || '';
+  if(get('postCategory'))  get('postCategory').value  = p.category || '';
+  if(get('postPublished')) get('postPublished').value  = String(p.published !== false);
+  if(get('postExcerpt'))   get('postExcerpt').value   = p.excerpt || '';
+  if(get('postContent'))   get('postContent').value   = p.content || '';
+  // Preview imagem existente
+  if(p.imageUrl && get('postImgPreview')) {
+    get('postImgPreview').src = p.imageUrl;
+    if(get('postImgPreviewWrap')) get('postImgPreviewWrap').style.display='block';
+  } else {
+    if(get('postImgPreviewWrap')) get('postImgPreviewWrap').style.display='none';
+  }
+  if(get('postUploadProgress')) get('postUploadProgress').style.display='none';
+  openModal('mPost');
+};
+
+// Preview de imagem
+get('postImage')?.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  if(get('postImgPreview')) get('postImgPreview').src = URL.createObjectURL(file);
+  if(get('postImgPreviewWrap')) get('postImgPreviewWrap').style.display='block';
+});
+
+// Salvar artigo
+get('postForm')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn      = get('savePostBtn');
+  const title    = get('postTitle')?.value.trim();
+  const category = get('postCategory')?.value;
+  const published = get('postPublished')?.value === 'true';
+  const excerpt  = get('postExcerpt')?.value.trim();
+  const content  = get('postContent')?.value.trim();
+  const file     = get('postImage')?.files[0];
+
+  btn.textContent = 'Guardando...'; btn.disabled = true;
+
+  try {
+    let imageUrl = null;
+    // Imagem existente se editando
+    if(editingPostId) {
+      const existing = allPosts.find(p=>p.id===editingPostId);
+      imageUrl = existing?.imageUrl || null;
+    }
+
+    // Upload nova imagem se selecionada
+    if(file) {
+      if(get('postUploadProgress')) get('postUploadProgress').style.display='block';
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('upload_preset', UPLOAD_PRESET_BLOG);
+      fd.append('folder', 'hs-gestion/blog');
+
+      const xhr = new XMLHttpRequest();
+      const result = await new Promise((res, rej) => {
+        xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME_BLOG}/image/upload`);
+        xhr.upload.onprogress = ev => {
+          if(ev.lengthComputable) {
+            const pct = Math.round(ev.loaded/ev.total*100);
+            if(get('postProgressBar')) get('postProgressBar').style.width = pct+'%';
+            if(get('postProgressTxt')) get('postProgressTxt').textContent = `Subiendo... ${pct}%`;
+          }
+        };
+        xhr.onload  = () => { const r=JSON.parse(xhr.responseText); xhr.status===200?res(r):rej(new Error(r.error?.message)); };
+        xhr.onerror = () => rej(new Error('Network error'));
+        xhr.send(fd);
+      });
+      imageUrl = result.secure_url;
+    }
+
+    const data = {
+      title, category, published, excerpt, content,
+      updatedAt: serverTimestamp()
+    };
+    if(imageUrl) data.imageUrl = imageUrl;
+
+    if(editingPostId) {
+      // Atualizar existente
+      await setDoc(doc(db,'blogPosts',editingPostId), data, { merge: true });
+      toast(`✅ Artículo actualizado!`, 'success');
+    } else {
+      // Criar novo
+      data.createdAt = serverTimestamp();
+      await setDoc(doc(collection(db,'blogPosts')), data);
+      toast(`✅ Artículo "${title}" publicado!`, 'success');
+    }
+
+    closeModal('mPost');
+    await loadPosts();
+  } catch(err) {
+    console.error(err);
+    toast('Error: '+err.message, 'error');
+  } finally {
+    btn.textContent = editingPostId ? '💾 Actualizar' : '☁️ Guardar Artículo';
+    btn.disabled = false;
+    if(get('postUploadProgress')) get('postUploadProgress').style.display='none';
+  }
+});
+
+window.askDeletePost = (pid, title) =>
+  confirm(`¿Eliminar el artículo "${title}"?`, async () => {
+    await deleteDoc(doc(db,'blogPosts',pid));
+    toast('🗑️ Artículo eliminado','success');
+    await loadPosts();
+  });
