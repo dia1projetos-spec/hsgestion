@@ -369,7 +369,7 @@ async function deleteMsg(mid) {
 // ── PACKS (Cloudinary) ───────────────────────────────────────────────────────────
 
 // Credenciais Cloudinary
-const CLOUD_NAME   = "mediaflows_9428ae2d-2a04-45b1-82AD-c4523d2f4356";
+const CLOUD_NAME   = "dc0bxgeea";
 const UPLOAD_PRESET = "hs_gestion_packs"; // unsigned preset — criar no Cloudinary Dashboard
 
 async function uploadToCloudinary(file, onProgress) {
