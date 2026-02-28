@@ -43,6 +43,7 @@
         <button class="sb-item" data-pg="mensajes"><span class="ic">💬</span> Mensajes</button>
         <button class="sb-item" data-pg="packs"><span class="ic">📦</span> Packs</button>
         <button class="sb-item" data-pg="proyectos"><span class="ic">🗂️</span> Proyectos</button>
+        <button class="sb-item" data-pg="blog"><span class="ic">✍️</span> Blog / Artículos</button>
         <span class="sb-label">Cuenta</span>
         <button class="sb-item danger" id="logoutBtn"><span class="ic">🚪</span> Cerrar Sesión</button>
       </nav>
@@ -207,6 +208,22 @@
           </div>
         </div>
 
+        <!-- BLOG -->
+        <div class="page" id="pg-blog">
+          <div class="sec-header">
+            <h2>Blog / Artículos</h2>
+            <button class="btn btn-blue" id="btnNewPost">✍️ Nuevo Artículo</button>
+          </div>
+          <div class="info-box">
+            Los artículos publicados aparecen automáticamente en 
+            <a href="../blog/" target="_blank" style="color:#58a6ff;">la página del blog →</a>
+            y los <strong>3 más recientes</strong> se muestran en la página principal.
+          </div>
+          <div class="posts-admin-grid" id="postsAdminGrid">
+            <div class="empty"><span class="empty-ic">✍️</span><p>Sin artículos aún. Hacé clic en "Nuevo Artículo".</p></div>
+          </div>
+        </div>
+
       </div><!-- /content -->
     </div><!-- /mainWrap -->
   </div><!-- /wrapper -->
@@ -358,6 +375,68 @@
       <button class="btn btn-gray" id="confirmNo">Cancelar</button>
       <button class="btn btn-red"  id="confirmSi">Sí, confirmar</button>
     </div>
+  </div>
+</div>
+
+<!-- Modal Nuevo Artículo -->
+<div class="modal-bg" id="mPost">
+  <div class="modal modal-lg">
+    <div class="modal-hd">
+      <h3 id="mPostTitle">✍️ Nuevo Artículo</h3>
+      <button class="modal-x" data-close>✕</button>
+    </div>
+    <form id="postForm" autocomplete="off">
+      <div class="fg">
+        <label>Título *</label>
+        <input type="text" id="postTitle" placeholder="Ej: Cómo elegir colores para tu marca" required/>
+      </div>
+      <div class="fr">
+        <div class="fg">
+          <label>Categoría</label>
+          <select id="postCategory">
+            <option value="">— Sin categoría —</option>
+            <option value="diseño-web">🌐 Diseño Web</option>
+            <option value="redes">📱 Redes Sociales</option>
+            <option value="convites">✉️ Convites</option>
+            <option value="tips">💡 Tips</option>
+            <option value="novedades">🔔 Novedades</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Estado</label>
+          <select id="postPublished">
+            <option value="true">✅ Publicado</option>
+            <option value="false">📝 Borrador</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Resumen (aparece en las cards)</label>
+        <input type="text" id="postExcerpt" placeholder="Breve descripción del artículo (máx 150 caracteres)"/>
+      </div>
+      <div class="fg">
+        <label>Contenido completo *</label>
+        <textarea id="postContent" style="min-height:180px;" placeholder="Escribí el artículo completo acá..." required></textarea>
+      </div>
+      <div class="fg">
+        <label>Imagen del artículo</label>
+        <input type="file" id="postImage" accept="image/*"/>
+        <p class="hint">Recomendado: 1200×630px. Se sube via Cloudinary.</p>
+        <div id="postImgPreviewWrap" style="display:none;margin-top:10px;">
+          <img id="postImgPreview" style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;border:1px solid #21262d;"/>
+        </div>
+      </div>
+      <div id="postUploadProgress" style="display:none;margin-top:8px;">
+        <div style="background:#0d1117;border-radius:6px;height:5px;overflow:hidden;margin-bottom:5px;">
+          <div id="postProgressBar" style="height:100%;background:linear-gradient(90deg,#1f6feb,#0ea5e9);width:0%;transition:width .3s;border-radius:6px;"></div>
+        </div>
+        <p id="postProgressTxt" style="font-size:.7rem;color:#484f58;">Subiendo imagen...</p>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+        <button type="button" class="btn btn-gray" data-close>Cancelar</button>
+        <button type="submit" class="btn btn-blue" id="savePostBtn">☁️ Guardar Artículo</button>
+      </div>
+    </form>
   </div>
 </div>
 

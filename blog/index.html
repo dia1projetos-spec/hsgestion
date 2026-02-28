@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Blog – HS Gestión</title>
+  <meta name="description" content="Artículos, consejos y novedades sobre diseño web, redes sociales e invitaciones digitales. Blog de HS Gestión."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="blog.css?v=1.0.0"/>
+</head>
+<body>
+
+<nav>
+  <a href="../index.html" class="nav-logo">
+    <img src="../images/logo.png" alt="HS Gestión"/>
+    <span>HS Gestión</span>
+  </a>
+  <div class="nav-links">
+    <a href="../index.html#servicios">Servicios</a>
+    <a href="../index.html#nosotros">Nosotros</a>
+    <a href="../index.html#contacto">Contacto</a>
+    <a href="../index.html#contacto" class="nav-cta">Consultá ya →</a>
+  </div>
+  <button class="nav-hamburger" id="navHamburger">☰</button>
+</nav>
+
+<!-- HERO -->
+<section class="blog-hero">
+  <div class="blog-hero-glow"></div>
+  <div class="container">
+    <span class="eyebrow">✦ Contenido &amp; Conocimiento</span>
+    <h1 class="blog-hero-title">Nuestro <em>Blog</em></h1>
+    <p class="blog-hero-sub">Consejos, tendencias y novedades sobre el mundo digital para hacer crecer tu negocio.</p>
+  </div>
+</section>
+
+<!-- FILTROS -->
+<section class="filters-section">
+  <div class="container">
+    <div class="filters" id="filtersWrap">
+      <button class="filter-btn active" data-cat="all">Todos</button>
+    </div>
+  </div>
+</section>
+
+<!-- GRID DE POSTS -->
+<section class="posts-section">
+  <div class="container">
+    <div class="posts-grid" id="postsGrid">
+      <div class="posts-loading">
+        <div class="loader-ring"></div>
+        <p>Cargando artículos...</p>
+      </div>
+    </div>
+    <div id="emptyState" style="display:none;" class="empty-state">
+      <span>📝</span>
+      <p>Aún no hay artículos publicados. ¡Volvé pronto!</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="blog-cta">
+  <div class="container">
+    <h2>¿Querés llevar tu negocio<br/>al siguiente nivel?</h2>
+    <p>Hablemos sobre cómo podemos ayudarte</p>
+    <a href="../index.html#contacto" class="btn-grad">Contactar ahora →</a>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>© 2025 <a href="../index.html">HS Gestión</a> — Todos los derechos reservados.</p>
+  </div>
+</footer>
+
+<!-- MODAL POST COMPLETO -->
+<div class="post-modal-bg" id="postModal">
+  <div class="post-modal">
+    <button class="post-modal-close" id="postModalClose">✕</button>
+    <div class="post-modal-img-wrap" id="postModalImg"></div>
+    <div class="post-modal-body">
+      <div class="post-modal-meta" id="postModalMeta"></div>
+      <h1 class="post-modal-title" id="postModalTitle"></h1>
+      <div class="post-modal-content" id="postModalContent"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getFirestore, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+const db = getFirestore(initializeApp({
+  apiKey:"AIzaSyDmMP5ZCfl9JfkQQf1xIfcGAei_BPLvKj8",
+  authDomain:"hs-gestion-a102e.firebaseapp.com",
+  projectId:"hs-gestion-a102e",
+  storageBucket:"hs-gestion-a102e.firebasestorage.app",
+  messagingSenderId:"40828198084",
+  appId:"1:40828198084:web:70dd328e4e242925727d91"
+}));
+
+const CATS = {
+  'diseño-web':    '🌐 Diseño Web',
+  'redes':         '📱 Redes Sociales',
+  'convites':      '✉️ Convites',
+  'tips':          '💡 Tips',
+  'novedades':     '🔔 Novedades'
+};
+
+let allPosts = [];
+
+async function loadPosts() {
+  const grid  = document.getElementById('postsGrid');
+  const empty = document.getElementById('emptyState');
+  try {
+    let snap;
+    try {
+      snap = await getDocs(query(collection(db,'blogPosts'), where('published','==',true), orderBy('createdAt','desc')));
+    } catch {
+      snap = await getDocs(query(collection(db,'blogPosts'), where('published','==',true)));
+    }
+    allPosts = snap.docs.map(d=>({id:d.id,...d.data()}));
+    allPosts.sort((a,b)=>{
+      const ta = a.createdAt?.toDate?.()?.getTime?.() || 0;
+      const tb = b.createdAt?.toDate?.()?.getTime?.() || 0;
+      return tb - ta;
+    });
+
+    buildFilters();
+
+    if(!allPosts.length) {
+      grid.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    renderPosts(allPosts);
+  } catch(e) {
+    console.error(e);
+    grid.innerHTML = `<div class="posts-loading"><p style="color:#6b7280;">Error al cargar. Recargá la página.</p></div>`;
+  }
+}
+
+function buildFilters() {
+  const cats = [...new Set(allPosts.map(p=>p.category).filter(Boolean))];
+  const wrap = document.getElementById('filtersWrap');
+  cats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn';
+    btn.dataset.cat = cat;
+    btn.textContent = CATS[cat] || cat;
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      renderPosts(cat === 'all' ? allPosts : allPosts.filter(p=>p.category===cat));
+    });
+    wrap.appendChild(btn);
+  });
+  wrap.querySelector('[data-cat="all"]').addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    wrap.querySelector('[data-cat="all"]').classList.add('active');
+    renderPosts(allPosts);
+  });
+}
+
+function fmtDate(ts) {
+  if(!ts) return '';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
+}
+
+function renderPosts(posts) {
+  const grid = document.getElementById('postsGrid');
+  const empty = document.getElementById('emptyState');
+  if(!posts.length) { grid.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display = 'none';
+  grid.innerHTML = posts.map((p,i) => `
+    <article class="post-card ${i===0?'post-card-featured':''}" onclick="openPost('${p.id}')">
+      <div class="post-img">
+        ${p.imageUrl
+          ? `<img src="${p.imageUrl}" alt="${p.title}" loading="lazy"/>`
+          : `<div class="post-img-placeholder">✍️</div>`}
+        <div class="post-img-overlay"></div>
+        ${p.category ? `<span class="post-cat">${CATS[p.category]||p.category}</span>` : ''}
+      </div>
+      <div class="post-body">
+        <div class="post-date">${fmtDate(p.createdAt)}</div>
+        <h2 class="post-title">${p.title}</h2>
+        <p class="post-excerpt">${p.excerpt || p.content?.substring(0,120)+'...' || ''}</p>
+        <span class="post-read-more">Leer artículo →</span>
+      </div>
+    </article>`).join('');
+}
+
+// Modal de post completo
+window.openPost = id => {
+  const p = allPosts.find(x=>x.id===id);
+  if(!p) return;
+  document.getElementById('postModalTitle').textContent = p.title;
+  document.getElementById('postModalMeta').innerHTML =
+    `<span>${fmtDate(p.createdAt)}</span>${p.category?`<span class="post-cat-inline">${CATS[p.category]||p.category}</span>`:''}`;
+  document.getElementById('postModalContent').innerHTML = p.content?.replace(/\n/g,'<br/>') || '';
+  const imgWrap = document.getElementById('postModalImg');
+  imgWrap.innerHTML = p.imageUrl
+    ? `<img src="${p.imageUrl}" alt="${p.title}"/>`
+    : '';
+  imgWrap.style.display = p.imageUrl ? 'block' : 'none';
+  document.getElementById('postModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+
+document.getElementById('postModalClose').addEventListener('click', closeModal);
+document.getElementById('postModal').addEventListener('click', e => {
+  if(e.target === document.getElementById('postModal')) closeModal();
+});
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+function closeModal() {
+  document.getElementById('postModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Nav hamburger
+document.getElementById('navHamburger')?.addEventListener('click', () => {
+  document.querySelector('.nav-links')?.classList.toggle('open');
+});
+
+loadPosts();
+</script>
+</body>
+</html>

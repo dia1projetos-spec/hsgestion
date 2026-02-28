@@ -591,3 +591,10 @@ tr:hover td { background: rgba(255,255,255,.015); }
   .stats { gap: 8px; }
   .packs-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ════ BLOG / POSTS ADMIN ════ */
+.posts-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
