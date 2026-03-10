@@ -2,9 +2,10 @@
 import { initializeApp }    from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import {
-  getFirestore, collection, doc, setDoc, getDocs,
+  getFirestore, collection, doc, setDoc, getDocs, getDoc,
   deleteDoc, query, where, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+const IMGBB_API_KEY = "2ba495fa493ded06658bad56dd84c1e4";
 
 const firebaseConfig = {
   apiKey:            "AIzaSyDmMP5ZCfl9JfkQQf1xIfcGAei_BPLvKj8",
@@ -18,10 +19,11 @@ const firebaseConfig = {
 const ADMIN_EMAIL  = "riconetson@gmail.com";
 const ALIAS_PAGO   = "sofiacuello25";
 const WHATSAPP_NUM = "5513981763452";
+const ZOE_EMAIL    = "zoeveos@protonmail.com";
 
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
+const app     = initializeApp(firebaseConfig);
+const auth    = getAuth(app);
+const db      = getFirestore(app);
 
 const get  = id => document.getElementById(id);
 const fmtDate = ts => {
@@ -56,6 +58,11 @@ async function loadUser(user) {
       loadMessages(),
       loadPacks()
     ]);
+
+    // Módulo exclusivo da Zoe
+    if (user.email === ZOE_EMAIL) {
+      initProductManager(userData.id);
+    }
 
     get('loadingState').style.display = 'none';
     get('mainContent').style.display  = 'block';
@@ -395,6 +402,389 @@ window.forceDownload = (url, filename, type) => {
   a.click();
   setTimeout(() => document.body.removeChild(a), 200);
 };
+
+// ── GESTÃO DE PRODUTOS (exclusivo Zoe) ───────────────────────────────────────
+function initProductManager(userId) {
+  // Injetar seção no DOM
+  const main = get('mainContent');
+  const section = document.createElement('div');
+  section.id = 'productSection';
+  section.innerHTML = `
+    <div class="prod-section">
+      <div class="prod-header">
+        <div>
+          <div class="prod-eyebrow">✦ Gestión de Inventario</div>
+          <h2 class="prod-title">Mis <em>Productos</em></h2>
+          <p class="prod-sub">Controlá tu stock, inversión y ganancias en un solo lugar</p>
+        </div>
+        <button class="prod-add-btn" id="prodAddBtn">+ Agregar Producto</button>
+      </div>
+
+      <!-- Resumen stats -->
+      <div class="prod-stats" id="prodStats">
+        <div class="prod-stat">
+          <div class="ps-label">Total Productos</div>
+          <div class="ps-val" id="psTotalItems">0</div>
+        </div>
+        <div class="prod-stat">
+          <div class="ps-label">Unidades en Stock</div>
+          <div class="ps-val" id="psTotalUnits">0</div>
+        </div>
+        <div class="prod-stat">
+          <div class="ps-label">Capital Invertido</div>
+          <div class="ps-val" id="psTotalInvested">$0</div>
+        </div>
+        <div class="prod-stat">
+          <div class="ps-label">Ganancia Potencial</div>
+          <div class="ps-val green" id="psTotalProfit">$0</div>
+        </div>
+      </div>
+
+      <!-- Grilla de productos -->
+      <div class="prod-grid" id="prodGrid">
+        <div class="prod-loading">Cargando productos...</div>
+      </div>
+    </div>
+
+    <!-- Modal agregar/editar producto -->
+    <div class="prod-modal-bg" id="prodModalBg">
+      <div class="prod-modal">
+        <div class="prod-modal-hd">
+          <h3 id="prodModalTitle">Agregar Producto</h3>
+          <button class="prod-modal-x" id="prodModalClose">✕</button>
+        </div>
+
+        <!-- Preview de imagen -->
+        <div class="prod-img-upload" id="prodImgUpload">
+          <input type="file" id="prodImgInput" accept="image/*" style="display:none"/>
+          <div class="prod-img-preview" id="prodImgPreview">
+            <span>📷</span>
+            <p>Tocá para subir una foto</p>
+          </div>
+        </div>
+
+        <div class="prod-form">
+          <div class="pf-group">
+            <label>Nombre del producto *</label>
+            <input type="text" id="pfName" placeholder="Ej: Remera básica negra" />
+          </div>
+          <div class="pf-row">
+            <div class="pf-group">
+              <label>Cantidad en stock *</label>
+              <input type="number" id="pfQty" placeholder="0" min="0" />
+            </div>
+            <div class="pf-group">
+              <label>Categoría</label>
+              <input type="text" id="pfCategory" placeholder="Ej: Ropa, Accesorios..." />
+            </div>
+          </div>
+          <div class="pf-row">
+            <div class="pf-group">
+              <label>Valor invertido (por unidad) *</label>
+              <input type="number" id="pfCost" placeholder="0.00" min="0" step="0.01" />
+            </div>
+            <div class="pf-group">
+              <label>Precio de venta *</label>
+              <input type="number" id="pfPrice" placeholder="0.00" min="0" step="0.01" />
+            </div>
+          </div>
+          <div class="pf-group">
+            <label>Notas (opcional)</label>
+            <textarea id="pfNotes" placeholder="Descripción, proveedor, colores disponibles..."></textarea>
+          </div>
+          <div class="pf-profit-preview" id="pfProfitPreview"></div>
+          <div class="pf-actions">
+            <button class="pf-cancel" id="pfCancelBtn">Cancelar</button>
+            <button class="pf-save" id="pfSaveBtn">Guardar Producto</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal confirmar eliminação -->
+    <div class="prod-modal-bg" id="prodDeleteBg">
+      <div class="prod-modal" style="max-width:340px;text-align:center;">
+        <span style="font-size:2.5rem;display:block;margin-bottom:12px;">🗑️</span>
+        <h3 style="color:var(--white);margin-bottom:8px;">¿Eliminar producto?</h3>
+        <p style="font-size:.85rem;color:var(--muted2);margin-bottom:20px;">Esta acción no se puede deshacer.</p>
+        <div style="display:flex;gap:10px;justify-content:center;">
+          <button class="pf-cancel" id="delCancelBtn">Cancelar</button>
+          <button class="pf-save" id="delConfirmBtn" style="background:var(--red);">Eliminar</button>
+        </div>
+      </div>
+    </div>
+  `;
+  main.appendChild(section);
+
+  // Estado do módulo
+  let products    = [];
+  let editingId   = null;
+  let deletingId  = null;
+  let uploadedUrl = null;
+  let uploadedPath= null;
+
+  const prodModalBg  = get('prodModalBg');
+  const prodDeleteBg = get('prodDeleteBg');
+
+  // ── Carregar produtos ──────────────────────────────────────────────────────
+  async function loadProducts() {
+    const grid = get('prodGrid');
+    try {
+      const snap = await getDocs(
+        query(collection(db, 'zoe_products'), where('userId', '==', userId))
+      );
+      products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderProducts();
+      updateStats();
+    } catch(err) {
+      console.error('loadProducts:', err);
+      grid.innerHTML = `<div class="prod-loading">Error al cargar productos.</div>`;
+    }
+  }
+
+  // ── Renderizar grilla ──────────────────────────────────────────────────────
+  function renderProducts() {
+    const grid = get('prodGrid');
+    if (!products.length) {
+      grid.innerHTML = `
+        <div class="prod-empty">
+          <span>📦</span>
+          <p>Todavía no tenés productos cargados</p>
+          <small>Hacé clic en "Agregar Producto" para empezar</small>
+        </div>`;
+      return;
+    }
+    grid.innerHTML = products.map(p => {
+      const profit   = (parseFloat(p.price||0) - parseFloat(p.cost||0)).toFixed(2);
+      const totalInv = (parseFloat(p.cost||0) * parseInt(p.qty||0)).toFixed(2);
+      const margin   = p.price > 0 ? Math.round(((p.price - p.cost) / p.price) * 100) : 0;
+      return `
+        <div class="prod-card">
+          <div class="prod-card-img">
+            ${p.imageUrl
+              ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy"/>`
+              : `<span class="prod-no-img">📦</span>`}
+            ${p.category ? `<span class="prod-cat-badge">${p.category}</span>` : ''}
+          </div>
+          <div class="prod-card-body">
+            <div class="prod-card-name">${p.name}</div>
+            ${p.notes ? `<div class="prod-card-notes">${p.notes}</div>` : ''}
+            <div class="prod-card-nums">
+              <div class="pcn-item">
+                <span class="pcn-label">Stock</span>
+                <span class="pcn-val ${parseInt(p.qty)===0?'red':''}">${p.qty} u.</span>
+              </div>
+              <div class="pcn-item">
+                <span class="pcn-label">Invertido</span>
+                <span class="pcn-val">$${parseFloat(p.cost).toLocaleString('es-AR')}</span>
+              </div>
+              <div class="pcn-item">
+                <span class="pcn-label">Venta</span>
+                <span class="pcn-val">$${parseFloat(p.price).toLocaleString('es-AR')}</span>
+              </div>
+              <div class="pcn-item">
+                <span class="pcn-label">Ganancia</span>
+                <span class="pcn-val green">$${parseFloat(profit).toLocaleString('es-AR')} <small>(${margin}%)</small></span>
+              </div>
+            </div>
+            <div class="prod-card-actions">
+              <button class="pca-edit" onclick="prodEdit('${p.id}')">✏️ Editar</button>
+              <button class="pca-del"  onclick="prodDelete('${p.id}')">🗑️</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Stats ──────────────────────────────────────────────────────────────────
+  function updateStats() {
+    const totalItems    = products.length;
+    const totalUnits    = products.reduce((s,p) => s + parseInt(p.qty||0), 0);
+    const totalInvested = products.reduce((s,p) => s + (parseFloat(p.cost||0) * parseInt(p.qty||0)), 0);
+    const totalRevenue  = products.reduce((s,p) => s + (parseFloat(p.price||0) * parseInt(p.qty||0)), 0);
+    const totalProfit   = totalRevenue - totalInvested;
+
+    get('psTotalItems').textContent    = totalItems;
+    get('psTotalUnits').textContent    = totalUnits;
+    get('psTotalInvested').textContent = `$${totalInvested.toLocaleString('es-AR',{minimumFractionDigits:2})}`;
+    get('psTotalProfit').textContent   = `$${totalProfit.toLocaleString('es-AR',{minimumFractionDigits:2})}`;
+  }
+
+  // ── Abrir modal ────────────────────────────────────────────────────────────
+  function openModal(product = null) {
+    editingId   = product?.id || null;
+    uploadedUrl = product?.imageUrl || null;
+    uploadedPath= product?.imagePath || null;
+
+    get('prodModalTitle').textContent = product ? 'Editar Producto' : 'Agregar Producto';
+    get('pfName').value     = product?.name     || '';
+    get('pfQty').value      = product?.qty      || '';
+    get('pfCategory').value = product?.category || '';
+    get('pfCost').value     = product?.cost     || '';
+    get('pfPrice').value    = product?.price    || '';
+    get('pfNotes').value    = product?.notes    || '';
+
+    const preview = get('prodImgPreview');
+    if (product?.imageUrl) {
+      preview.innerHTML = `<img src="${product.imageUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;"/>`;
+    } else {
+      preview.innerHTML = `<span>📷</span><p>Tocá para subir una foto</p>`;
+    }
+
+    updateProfitPreview();
+    prodModalBg.classList.add('open');
+  }
+
+  function closeModal() {
+    prodModalBg.classList.remove('open');
+    editingId = null; uploadedUrl = null; uploadedPath = null;
+  }
+
+  // ── Preview de lucro ───────────────────────────────────────────────────────
+  function updateProfitPreview() {
+    const cost  = parseFloat(get('pfCost')?.value  || 0);
+    const price = parseFloat(get('pfPrice')?.value || 0);
+    const qty   = parseInt(get('pfQty')?.value     || 0);
+    const el    = get('pfProfitPreview');
+    if (!el) return;
+    if (cost > 0 && price > 0) {
+      const profit = price - cost;
+      const margin = Math.round((profit / price) * 100);
+      const total  = profit * qty;
+      el.innerHTML = `
+        <div class="profit-preview-inner">
+          <span>💰 Ganancia por unidad: <strong>$${profit.toLocaleString('es-AR')}</strong></span>
+          <span>📊 Margen: <strong>${margin}%</strong></span>
+          ${qty > 0 ? `<span>🏆 Ganancia total potencial: <strong>$${total.toLocaleString('es-AR')}</strong></span>` : ''}
+        </div>`;
+    } else {
+      el.innerHTML = '';
+    }
+  }
+
+  // ── Upload de imagem (ImgBB) ───────────────────────────────────────────────
+  get('prodImgUpload').addEventListener('click', () => get('prodImgInput').click());
+  get('prodImgInput').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const preview = get('prodImgPreview');
+    preview.innerHTML = `<div class="prod-uploading">⏳ Subiendo imagen...</div>`;
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('key', IMGBB_API_KEY);
+
+      const res  = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData });
+      const json = await res.json();
+
+      if (!json.success) throw new Error(json.error?.message || 'Error al subir');
+
+      uploadedUrl  = json.data.url;
+      uploadedPath = json.data.delete_url; // guardamos la URL de eliminación
+      preview.innerHTML = `<img src="${uploadedUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;"/>`;
+    } catch(err) {
+      console.error('upload error:', err);
+      preview.innerHTML = `<span>⚠️</span><p>Error al subir. Intentá de nuevo.</p>`;
+    }
+  });
+
+  // ── Guardar producto ───────────────────────────────────────────────────────
+  get('pfSaveBtn').addEventListener('click', async () => {
+    const name  = get('pfName').value.trim();
+    const qty   = get('pfQty').value;
+    const cost  = get('pfCost').value;
+    const price = get('pfPrice').value;
+
+    if (!name || qty === '' || cost === '' || price === '') {
+      alert('Completá los campos obligatorios (*)');
+      return;
+    }
+
+    const btn = get('pfSaveBtn');
+    btn.textContent = 'Guardando...';
+    btn.disabled = true;
+
+    const data = {
+      userId,
+      name,
+      qty:      parseInt(qty),
+      category: get('pfCategory').value.trim(),
+      cost:     parseFloat(cost),
+      price:    parseFloat(price),
+      notes:    get('pfNotes').value.trim(),
+      imageUrl:  uploadedUrl  || null,
+      imagePath: uploadedPath || null,
+      updatedAt: serverTimestamp()
+    };
+
+    try {
+      if (editingId) {
+        await setDoc(doc(db, 'zoe_products', editingId), data, { merge: true });
+      } else {
+        data.createdAt = serverTimestamp();
+        await setDoc(doc(collection(db, 'zoe_products')), data);
+      }
+      closeModal();
+      await loadProducts();
+    } catch(err) {
+      console.error('save error:', err);
+      alert('Error al guardar: ' + err.message);
+    } finally {
+      btn.textContent = 'Guardar Producto';
+      btn.disabled = false;
+    }
+  });
+
+  // ── Editar ─────────────────────────────────────────────────────────────────
+  window.prodEdit = id => {
+    const p = products.find(x => x.id === id);
+    if (p) openModal(p);
+  };
+
+  // ── Eliminar ───────────────────────────────────────────────────────────────
+  window.prodDelete = id => {
+    deletingId = id;
+    prodDeleteBg.classList.add('open');
+  };
+
+  get('delCancelBtn').addEventListener('click', () => {
+    prodDeleteBg.classList.remove('open');
+    deletingId = null;
+  });
+
+  get('delConfirmBtn').addEventListener('click', async () => {
+    if (!deletingId) return;
+    const btn = get('delConfirmBtn');
+    btn.textContent = 'Eliminando...';
+    btn.disabled = true;
+
+    try {
+      await deleteDoc(doc(db, 'zoe_products', deletingId));
+      prodDeleteBg.classList.remove('open');
+      deletingId = null;
+      await loadProducts();
+    } catch(err) {
+      alert('Error al eliminar: ' + err.message);
+    } finally {
+      btn.textContent = 'Eliminar';
+      btn.disabled = false;
+    }
+  });
+
+  // ── Eventos gerais ─────────────────────────────────────────────────────────
+  get('prodAddBtn').addEventListener('click', () => openModal());
+  get('prodModalClose').addEventListener('click', closeModal);
+  get('pfCancelBtn').addEventListener('click', closeModal);
+  prodModalBg.addEventListener('click', e => { if(e.target===prodModalBg) closeModal(); });
+
+  ['pfCost','pfPrice','pfQty'].forEach(id => {
+    get(id)?.addEventListener('input', updateProfitPreview);
+  });
+
+  // Carregar
+  loadProducts();
+}
 
 // ── ERROR / LOADING ────────────────────────────────────────────────────────────
 function showError(msg) {
