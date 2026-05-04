@@ -1,7 +1,7 @@
 // HS Gestión – Home JS v2.0.0
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, setDoc, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, getDoc, setDoc, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey:            "AIzaSyDmMP5ZCfl9JfkQQf1xIfcGAei_BPLvKj8",
@@ -162,9 +162,11 @@ document.getElementById('loginSubmitBtn')?.addEventListener('click', async () =>
 async function redirectUser(user) {
   if (user.email === ADMIN_EMAIL) { window.location.href = 'admin/index.html'; return; }
   try {
-    const snap = await getDocs(query(collection(db,'users'), where('email','==',user.email)));
-    if (!snap.empty) { window.location.href = 'usuarios/index.html'; }
-    else {
+    // Busca pelo UID diretamente (evita query por email que exige permissão extra)
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (snap.exists()) {
+      window.location.href = 'usuarios/index.html';
+    } else {
       const errEl = document.getElementById('loginError');
       errEl.textContent = '⚠ Tu cuenta no está registrada. Contactá al administrador.';
       errEl.style.display = 'block';
