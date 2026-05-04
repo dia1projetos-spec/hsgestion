@@ -3,416 +3,445 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HS Gestión – Admin</title>
-  <meta name="robots" content="noindex,nofollow" />
+  <title>Admin | HS Gestión</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="css/admin.css?v=2.0.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <!-- Quill rich text editor -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css" rel="stylesheet" />
+  <style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#050a0f;--bg2:#080f17;--bg3:#0c1520;--bg4:#111d2a;
+    --green:#00ff88;--green2:#00cc6a;--cyan:#00d4ff;--red:#ff3366;--yellow:#ffd700;
+    --text:#c8e0f0;--muted:#4a6a80;--border:rgba(0,255,136,0.12);
+    --mono:'Share Tech Mono',monospace;--head:'Orbitron',sans-serif;--body:'Rajdhani',sans-serif;
+    --ease:all 0.25s cubic-bezier(0.4,0,0.2,1);
+    --sidebar:240px;
+  }
+  html{scroll-behavior:smooth}
+  body{font-family:var(--body);background:var(--bg);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden}
+  ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--green);border-radius:2px}
+
+  /* SIDEBAR */
+  #sidebar{
+    width:var(--sidebar);min-height:100vh;background:var(--bg2);
+    border-right:1px solid var(--border);display:flex;flex-direction:column;
+    position:fixed;top:0;left:0;z-index:100;
+    transition:transform .3s;
+  }
+  .sidebar-logo{padding:20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+  .sidebar-logo img{height:32px}
+  .sidebar-logo-text{font-family:var(--head);font-size:.75rem;color:var(--green);letter-spacing:2px}
+  .sidebar-user{padding:14px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.68rem;color:var(--muted)}
+  .sidebar-user span{color:var(--green);display:block;font-size:.72rem;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  .sidebar-nav{flex:1;padding:12px 0;overflow-y:auto}
+  .nav-section{padding:10px 16px 4px;font-family:var(--mono);font-size:.6rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;font-family:var(--body);font-size:.88rem;font-weight:600;color:var(--muted);text-decoration:none;cursor:pointer;transition:var(--ease);border-left:2px solid transparent;letter-spacing:.5px}
+  .nav-item:hover{color:var(--text);background:rgba(0,255,136,0.04)}
+  .nav-item.active{color:var(--green);border-left-color:var(--green);background:rgba(0,255,136,0.06)}
+  .nav-item .nav-icon{font-size:1rem;width:20px;text-align:center}
+
+  .sidebar-footer{padding:14px 16px;border-top:1px solid var(--border)}
+  .btn-logout{width:100%;padding:9px;background:transparent;border:1px solid rgba(255,51,102,0.3);border-radius:3px;color:#ff6688;font-family:var(--mono);font-size:.72rem;letter-spacing:1px;cursor:pointer;transition:var(--ease)}
+  .btn-logout:hover{background:rgba(255,51,102,0.08);border-color:var(--red)}
+
+  /* MAIN */
+  #main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+  /* TOPBAR */
+  #topbar{
+    height:60px;background:rgba(8,15,23,0.95);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 28px;position:sticky;top:0;z-index:50;
+  }
+  .topbar-title{font-family:var(--head);font-size:.9rem;font-weight:700;color:var(--text);letter-spacing:1px}
+  .topbar-right{display:flex;align-items:center;gap:14px}
+  .topbar-badge{font-family:var(--mono);font-size:.7rem;color:var(--green);border:1px solid var(--border);padding:4px 10px;border-radius:2px}
+
+  /* PAGE CONTENT */
+  .page{display:none;padding:28px;flex:1}
+  .page.active{display:block}
+
+  /* CARDS STATS */
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:28px}
+  .stat-card{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:20px;transition:var(--ease)}
+  .stat-card:hover{border-color:rgba(0,255,136,0.25)}
+  .stat-num{font-family:var(--head);font-size:2rem;font-weight:900;color:var(--green);line-height:1}
+  .stat-label{font-family:var(--mono);font-size:.68rem;color:var(--muted);letter-spacing:1px;margin-top:6px}
+  .stat-icon{font-size:1.5rem;margin-bottom:10px}
+
+  /* SECTION HEADER */
+  .sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+  .sec-title{font-family:var(--head);font-size:1rem;font-weight:700;color:var(--text);letter-spacing:1px}
+
+  /* BUTTONS */
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:3px;font-family:var(--mono);font-size:.72rem;font-weight:700;letter-spacing:1.5px;cursor:pointer;transition:var(--ease);border:none;text-transform:uppercase}
+  .btn-green{background:var(--green);color:var(--bg)}.btn-green:hover{background:var(--green2);box-shadow:0 0 16px rgba(0,255,136,.3)}
+  .btn-outline-g{background:transparent;border:1px solid var(--green);color:var(--green)}.btn-outline-g:hover{background:rgba(0,255,136,.08)}
+  .btn-red{background:transparent;border:1px solid rgba(255,51,102,.35);color:#ff6688}.btn-red:hover{background:rgba(255,51,102,.08)}
+  .btn-cyan{background:transparent;border:1px solid var(--cyan);color:var(--cyan)}.btn-cyan:hover{background:rgba(0,212,255,.08)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn-sm{padding:6px 12px;font-size:.65rem}
+
+  /* TABLE */
+  .data-table{width:100%;border-collapse:collapse;font-size:.85rem}
+  .data-table th{padding:10px 14px;text-align:left;font-family:var(--mono);font-size:.65rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+  .data-table td{padding:11px 14px;border-bottom:1px solid rgba(0,255,136,0.05);vertical-align:middle}
+  .data-table tr:hover td{background:rgba(0,255,136,0.025)}
+  .data-table .actions{display:flex;gap:7px}
+  .badge{display:inline-block;padding:2px 8px;border-radius:2px;font-family:var(--mono);font-size:.6rem;letter-spacing:1px}
+  .badge-green{background:rgba(0,255,136,0.12);color:var(--green);border:1px solid rgba(0,255,136,0.2)}
+  .badge-yellow{background:rgba(255,215,0,0.1);color:var(--yellow);border:1px solid rgba(255,215,0,0.2)}
+  .badge-red{background:rgba(255,51,102,0.1);color:#ff6688;border:1px solid rgba(255,51,102,0.2)}
+
+  /* CARD */
+  .card{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:22px;margin-bottom:20px}
+  .card-title{font-family:var(--head);font-size:.82rem;font-weight:700;color:var(--green);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+
+  /* FORM */
+  .form-grid{display:grid;gap:14px}
+  .form-grid-2{grid-template-columns:1fr 1fr}
+  @media(max-width:640px){.form-grid-2{grid-template-columns:1fr}}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-family:var(--mono);font-size:.65rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase}
+  .field input,.field select,.field textarea{padding:9px 13px;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:var(--body);font-size:.9rem;transition:var(--ease);outline:none;resize:vertical}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255,136,.14)}
+  .field select option{background:var(--bg3)}
+
+  /* QUILL OVERRIDES */
+  .ql-toolbar{background:var(--bg4)!important;border:1px solid var(--border)!important;border-radius:3px 3px 0 0!important}
+  .ql-toolbar .ql-stroke{stroke:var(--muted)!important}
+  .ql-toolbar .ql-fill{fill:var(--muted)!important}
+  .ql-toolbar button:hover .ql-stroke,.ql-toolbar .ql-active .ql-stroke{stroke:var(--green)!important}
+  .ql-toolbar button:hover .ql-fill,.ql-toolbar .ql-active .ql-fill{fill:var(--green)!important}
+  .ql-container{background:rgba(0,0,0,.3)!important;border:1px solid var(--border)!important;border-top:none!important;border-radius:0 0 3px 3px!important;min-height:320px}
+  .ql-editor{color:var(--text)!important;font-family:var(--body)!important;font-size:.95rem!important;min-height:320px}
+  .ql-editor.ql-blank::before{color:var(--muted)!important;font-style:normal!important;font-family:var(--mono)!important;font-size:.82rem!important}
+  .ql-snow .ql-picker{color:var(--muted)!important}
+  .ql-snow .ql-picker-options{background:var(--bg3)!important;border:1px solid var(--border)!important}
+
+  /* IMAGE UPLOAD */
+  .upload-zone{border:2px dashed var(--border);border-radius:5px;padding:28px;text-align:center;cursor:pointer;transition:var(--ease);background:rgba(0,0,0,.2)}
+  .upload-zone:hover,.upload-zone.drag{border-color:var(--green);background:rgba(0,255,136,.03)}
+  .upload-zone p{font-family:var(--mono);font-size:.75rem;color:var(--muted);margin-top:8px}
+  .upload-zone .icon{font-size:2rem}
+  .img-preview{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px}
+  .img-thumb{position:relative;width:100px;height:100px;border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+  .img-thumb img{width:100%;height:100%;object-fit:cover}
+  .img-thumb .del{position:absolute;top:3px;right:3px;width:20px;height:20px;background:rgba(255,51,102,.8);border:none;border-radius:50%;color:white;font-size:.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .upload-progress{display:none;margin-top:8px;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+  .upload-progress-bar{height:100%;background:var(--green);width:0;transition:width .3s}
+
+  /* SLIDES GRID */
+  .slides-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:16px}
+  .slide-card{background:var(--bg4);border:1px solid var(--border);border-radius:5px;overflow:hidden;transition:var(--ease)}
+  .slide-card:hover{border-color:rgba(0,255,136,.25)}
+  .slide-card-img{width:100%;height:130px;object-fit:cover;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:2rem}
+  .slide-card-body{padding:12px}
+  .slide-card-title{font-family:var(--head);font-size:.75rem;color:var(--text);margin-bottom:6px}
+  .slide-card-actions{display:flex;gap:7px;margin-top:10px}
+  .slide-order{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.68rem;color:var(--muted)}
+
+  /* MENU BUILDER */
+  .menu-item-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg4);border:1px solid var(--border);border-radius:4px;margin-bottom:8px;cursor:grab}
+  .menu-item-row:active{cursor:grabbing;background:rgba(0,255,136,.05)}
+  .menu-item-row .drag-handle{color:var(--muted);font-size:.9rem;cursor:grab}
+  .menu-item-label{flex:1;font-family:var(--body);font-size:.88rem;font-weight:600}
+  .menu-item-url{font-family:var(--mono);font-size:.68rem;color:var(--muted)}
+  .menu-children{margin-left:28px;margin-top:4px}
+
+  /* TOAST */
+  #toast{position:fixed;bottom:28px;right:28px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+  .toast-item{padding:12px 18px;border-radius:4px;font-family:var(--mono);font-size:.75rem;letter-spacing:1px;animation:toastIn .3s ease;box-shadow:0 8px 28px rgba(0,0,0,.5)}
+  .toast-success{background:rgba(0,255,136,.12);border:1px solid rgba(0,255,136,.3);color:var(--green)}
+  .toast-error{background:rgba(255,51,102,.1);border:1px solid rgba(255,51,102,.3);color:#ff6688}
+  @keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+  /* MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:28px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;position:relative}
+  .modal-title{font-family:var(--head);font-size:.88rem;font-weight:700;color:var(--green);letter-spacing:2px;margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+  .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer}
+  .modal-close:hover{color:var(--red)}
+  .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:14px;border-top:1px solid var(--border)}
+
+  /* MOBILE */
+  .hamburger-admin{display:none;background:none;border:none;color:var(--green);font-size:1.3rem;cursor:pointer;margin-right:12px}
+  @media(max-width:768px){
+    #sidebar{transform:translateX(-100%)}
+    #sidebar.open{transform:translateX(0)}
+    #main{margin-left:0}
+    .hamburger-admin{display:block}
+    .form-grid-2{grid-template-columns:1fr}
+    .stats-grid{grid-template-columns:1fr 1fr}
+  }
+
+  /* Scanlines */
+  body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.02) 2px,rgba(0,0,0,0.02) 4px);pointer-events:none;z-index:9990}
+  </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
-<div id="loginScreen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
-  <div style="text-align:center;">
-    <img src="../images/logo.png" style="height:48px;margin-bottom:20px;display:block;margin-left:auto;margin-right:auto;" />
-    <div style="width:34px;height:34px;border:3px solid #21262d;border-top-color:#1f6feb;border-radius:50%;animation:sp 1s linear infinite;margin:0 auto 14px;"></div>
-    <p style="color:#484f58;font-size:.83rem;">Verificando acceso...</p>
-    <p style="margin-top:12px;"><a href="../index.html" style="color:#58a6ff;font-size:.78rem;">← Ir al login</a></p>
-    <style>@keyframes sp{to{transform:rotate(360deg)}}</style>
+<!-- SIDEBAR -->
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <img src="../images/logo.png" alt="HS" onerror="this.style.display='none'" />
+    <span class="sidebar-logo-text">HS_ADMIN</span>
   </div>
-</div>
+  <div class="sidebar-user">CONECTADO COMO<span id="adminEmail">...</span></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">PRINCIPAL</div>
+    <div class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</div>
+    <div class="nav-section">CONTENIDO</div>
+    <div class="nav-item" data-page="posts"><span class="nav-icon">📝</span> Artículos</div>
+    <div class="nav-item" data-page="newpost"><span class="nav-icon">✏️</span> Nuevo Artículo</div>
+    <div class="nav-item" data-page="slides"><span class="nav-icon">🖼️</span> Slides</div>
+    <div class="nav-item" data-page="menu"><span class="nav-icon">☰</span> Menú</div>
+    <div class="nav-section">CLIENTES</div>
+    <div class="nav-item" data-page="users"><span class="nav-icon">👥</span> Usuarios</div>
+    <div class="nav-item" data-page="contacts"><span class="nav-icon">📬</span> Consultas</div>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="btn-logout" id="logoutBtn">⏻ CERRAR SESIÓN</button>
+  </div>
+</aside>
 
-<!-- ADMIN APP -->
-<div id="adminApp" style="display:none;">
-  <div id="wrapper">
+<!-- MAIN -->
+<main id="main">
+  <div id="topbar">
+    <div style="display:flex;align-items:center">
+      <button class="hamburger-admin" id="sidebarToggle">☰</button>
+      <span class="topbar-title" id="topbarTitle">DASHBOARD</span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-badge" id="topbarTime"></span>
+      <a href="../index.html" target="_blank" class="btn btn-outline-g btn-sm">↗ VER SITIO</a>
+    </div>
+  </div>
 
-    <!-- SIDEBAR OVERLAY -->
-    <div class="sb-overlay" id="sbOverlay"></div>
+  <!-- ═══════════════════════ DASHBOARD ═══════════════════════ -->
+  <div class="page active" id="page-dashboard">
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-num" id="sPosts">—</div><div class="stat-label">ARTÍCULOS</div></div>
+      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-num" id="sUsers">—</div><div class="stat-label">USUARIOS</div></div>
+      <div class="stat-card"><div class="stat-icon">🖼️</div><div class="stat-num" id="sSlides">—</div><div class="stat-label">SLIDES</div></div>
+      <div class="stat-card"><div class="stat-icon">📬</div><div class="stat-num" id="sContacts">—</div><div class="stat-label">CONSULTAS</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">ÚLTIMAS CONSULTAS</div>
+      <table class="data-table" id="recentContacts">
+        <thead><tr><th>NOMBRE</th><th>SERVICIO</th><th>EMAIL</th><th>FECHA</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 
-    <!-- SIDEBAR -->
-    <aside id="sidebar">
-      <div class="sb-logo">
-        <img src="../images/logo.png" alt="HS" />
-        <span>HS Gestión</span>
+  <!-- ═══════════════════════ ARTÍCULOS ═══════════════════════ -->
+  <div class="page" id="page-posts">
+    <div class="sec-header">
+      <span class="sec-title">ARTÍCULOS DEL BLOG</span>
+      <button class="btn btn-green" onclick="navTo('newpost')">+ NUEVO ARTÍCULO</button>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="data-table" id="postsTable">
+        <thead><tr><th>TÍTULO</th><th>CATEGORÍA</th><th>ESTADO</th><th>FECHA</th><th>ACCIONES</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ NUEVO/EDITAR ARTÍCULO ═══════════════════════ -->
+  <div class="page" id="page-newpost">
+    <div class="sec-header">
+      <span class="sec-title" id="postFormTitle">NUEVO ARTÍCULO</span>
+      <button class="btn btn-outline-g" onclick="navTo('posts')">← VOLVER</button>
+    </div>
+    <input type="hidden" id="editPostId" />
+    <div class="card">
+      <div class="card-title">INFORMACIÓN</div>
+      <div class="form-grid">
+        <div class="field"><label>TÍTULO *</label><input type="text" id="pTitle" placeholder="Título del artículo" /></div>
+        <div class="form-grid form-grid-2">
+          <div class="field"><label>CATEGORÍA</label>
+            <select id="pCategory">
+              <option value="">Sin categoría</option>
+              <option value="Diseño Web">Diseño Web</option>
+              <option value="Redes Sociales">Redes Sociales</option>
+              <option value="Marketing Digital">Marketing Digital</option>
+              <option value="SEO">SEO</option>
+              <option value="Tecnología">Tecnología</option>
+              <option value="Tutoriales">Tutoriales</option>
+            </select>
+          </div>
+          <div class="field"><label>ESTADO</label>
+            <select id="pStatus">
+              <option value="draft">Borrador</option>
+              <option value="published">Publicado</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>AUTOR</label><input type="text" id="pAuthor" placeholder="Tu nombre" /></div>
+        <div class="field"><label>EXTRACTO (resumen breve)</label><textarea id="pExcerpt" rows="2" placeholder="Breve descripción para la lista del blog..."></textarea></div>
       </div>
-      <nav class="sb-nav">
-        <span class="sb-label">Principal</span>
-        <button class="sb-item active" data-pg="dashboard"><span class="ic">📊</span> Dashboard</button>
-        <button class="sb-item" data-pg="usuarios"><span class="ic">👥</span> Usuarios <span class="sb-pill" id="userPill">0</span></button>
-        <span class="sb-label">Comunicación</span>
-        <button class="sb-item" data-pg="mensajes"><span class="ic">💬</span> Mensajes</button>
-        <button class="sb-item" data-pg="packs"><span class="ic">📦</span> Packs</button>
-        <button class="sb-item" data-pg="proyectos"><span class="ic">🗂️</span> Proyectos</button>
-        <span class="sb-label">Cuenta</span>
-        <button class="sb-item danger" id="logoutBtn"><span class="ic">🚪</span> Cerrar Sesión</button>
-      </nav>
-      <div class="sb-footer">
-        <div class="sb-user">
-          <div class="sb-avatar">A</div>
-          <div class="sb-user-info">
-            <small>Administrador</small>
-            <span id="adminEmail">—</span>
-          </div>
-        </div>
+    </div>
+    <div class="card">
+      <div class="card-title">IMAGEN DE PORTADA</div>
+      <div class="upload-zone" id="coverUploadZone">
+        <div class="icon">🖼️</div>
+        <p>Arrastrá una imagen o hacé clic para seleccionar</p>
+        <p style="font-size:.62rem;margin-top:4px">JPG, PNG, WebP · máx. 2MB</p>
       </div>
-    </aside>
+      <div class="upload-progress" id="coverProgress"><div class="upload-progress-bar" id="coverProgressBar"></div></div>
+      <input type="hidden" id="pCoverImage" />
+      <div id="coverPreview" class="img-preview"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">CONTENIDO</div>
+      <div id="quillEditor"></div>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:4px">
+      <button class="btn btn-outline-g" id="saveDraftBtn">GUARDAR BORRADOR</button>
+      <button class="btn btn-green" id="savePostBtn">PUBLICAR ARTÍCULO</button>
+    </div>
+  </div>
 
-    <!-- MAIN -->
-    <div id="mainWrap">
-      <div id="topbar">
-        <div style="display:flex;align-items:center;">
-          <button id="menuToggle">☰</button>
-          <span id="topbarTitle">Dashboard</span>
-        </div>
-        <button class="btn btn-gray btn-sm" id="btnRefresh">🔄 Actualizar</button>
-      </div>
+  <!-- ═══════════════════════ SLIDES ═══════════════════════ -->
+  <div class="page" id="page-slides">
+    <div class="sec-header">
+      <span class="sec-title">GESTIÓN DE SLIDES</span>
+      <button class="btn btn-green" id="newSlideBtn">+ NUEVO SLIDE</button>
+    </div>
+    <p style="font-family:var(--mono);font-size:.72rem;color:var(--muted);margin-bottom:16px">Los slides aparecen en el header de la página principal. Podés reordenarlos arrastrando.</p>
+    <div class="slides-grid" id="slidesGrid"></div>
+  </div>
 
-      <div id="content">
+  <!-- ═══════════════════════ MENÚ ═══════════════════════ -->
+  <div class="page" id="page-menu">
+    <div class="sec-header">
+      <span class="sec-title">GESTOR DE MENÚ</span>
+      <button class="btn btn-green" id="newMenuItemBtn">+ AGREGAR ITEM</button>
+    </div>
+    <p style="font-family:var(--mono);font-size:.72rem;color:var(--muted);margin-bottom:16px">Podés crear ítems con dropdown asignando el mismo padre. El orden se guarda arrastrando.</p>
+    <div id="menuList"></div>
+  </div>
 
-        <!-- DASHBOARD -->
-        <div class="page active" id="pg-dashboard">
-          <div class="stats">
-            <div class="stat"><div class="stat-ic">👥</div><div class="stat-lbl">Usuarios</div><div class="stat-val" id="stUsers">0</div></div>
-            <div class="stat"><div class="stat-ic">✅</div><div class="stat-lbl">Pagados</div><div class="stat-val" id="stPaid">0</div></div>
-            <div class="stat"><div class="stat-ic">⏳</div><div class="stat-lbl">Pendientes</div><div class="stat-val" id="stOpen">0</div></div>
-            <div class="stat"><div class="stat-ic">📦</div><div class="stat-lbl">Packs</div><div class="stat-val" id="stPacks">0</div></div>
-          </div>
-          <div class="dash-row">
+  <!-- ═══════════════════════ USUARIOS ═══════════════════════ -->
+  <div class="page" id="page-users">
+    <div class="sec-header">
+      <span class="sec-title">USUARIOS / CLIENTES</span>
+      <button class="btn btn-green" id="newUserBtn">+ NUEVO USUARIO</button>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="data-table" id="usersTable">
+        <thead><tr><th>NOMBRE</th><th>EMAIL</th><th>SERVICIO</th><th>ESTADO</th><th>ACCIONES</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 
-            <!-- Coluna esquerda: Clock + Ações -->
-            <div style="display:flex;flex-direction:column;gap:14px;">
-              <!-- Relógio -->
-              <div class="box">
-                <div style="font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:#484f58;margin-bottom:10px;font-family:monospace;">⟡ Hora actual</div>
-                <div id="adminClock" style="font-family:'Courier New',monospace;font-size:2.2rem;font-weight:300;color:#f0f6fc;letter-spacing:4px;line-height:1;margin-bottom:4px;">00:00:00</div>
-                <div id="adminDate" style="font-size:.72rem;color:#484f58;font-family:monospace;letter-spacing:.5px;text-transform:uppercase;"></div>
-              </div>
-              <!-- Ações -->
-              <div class="box">
-                <h3>⚡ Acciones Rápidas</h3>
-                <div style="display:flex;flex-direction:column;gap:8px;">
-                  <button class="btn btn-blue" id="dBtnUser">➕ Crear Nuevo Usuario</button>
-                  <button class="btn btn-gray" id="dBtnMsg">📨 Enviar Mensaje</button>
-                  <button class="btn btn-gray" id="dBtnPacks">📦 Ver Packs</button>
-                </div>
-              </div>
-            </div>
+  <!-- ═══════════════════════ CONSULTAS ═══════════════════════ -->
+  <div class="page" id="page-contacts">
+    <div class="sec-header"><span class="sec-title">CONSULTAS RECIBIDAS</span></div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="data-table" id="contactsTable">
+        <thead><tr><th>NOMBRE</th><th>EMAIL</th><th>WHATSAPP</th><th>SERVICIO</th><th>MENSAJE</th><th>FECHA</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 
-            <!-- Coluna direita: Últimos usuários + Agenda -->
-            <div style="display:flex;flex-direction:column;gap:14px;">
-              <div class="box">
-                <h3>📋 Últimos Usuarios</h3>
-                <div id="dashRecent"><p style="color:#484f58;font-size:.83rem;">Cargando...</p></div>
-              </div>
-              <!-- Agenda Admin -->
-              <div class="box">
-                <h3>📅 Mi Agenda</h3>
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                  <div style="display:flex;align-items:center;gap:8px;">
-                    <button id="adAgPrev" style="background:#0d1117;border:1px solid #21262d;color:#8b949e;width:24px;height:24px;border-radius:5px;cursor:pointer;font-size:.75rem;">‹</button>
-                    <span id="adAgMonth" style="font-size:.75rem;font-weight:700;color:#f0f6fc;font-family:monospace;letter-spacing:1px;text-transform:uppercase;"></span>
-                    <button id="adAgNext" style="background:#0d1117;border:1px solid #21262d;color:#8b949e;width:24px;height:24px;border-radius:5px;cursor:pointer;font-size:.75rem;">›</button>
-                  </div>
-                </div>
-                <div id="adAgGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
-                <div id="adAgEvents" style="margin-top:8px;max-height:80px;overflow-y:auto;"></div>
-                <div style="display:flex;gap:6px;margin-top:8px;">
-                  <input type="text" id="adAgInput" placeholder="Agregar evento..."
-                    style="flex:1;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:6px 10px;color:#c9d1d9;font-size:.75rem;outline:none;font-family:inherit;" />
-                  <button id="adAgAdd" class="btn btn-blue btn-sm">+ Add</button>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- USUARIOS -->
-        <div class="page" id="pg-usuarios">
-          <div class="sec-header">
-            <h2>Gestión de Usuarios</h2>
-            <button class="btn btn-blue" id="btnNewUser">➕ Crear Usuario</button>
-          </div>
-          <div class="tbl-wrap">
-            <div class="tbl-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Usuario</th>
-                    <th>Servicio</th>
-                    <th>Valor</th>
-                    <th>Pago</th>
-                    <th>Fecha</th>
-                    <th>Página</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody id="usersBody"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- MENSAJES -->
-        <div class="page" id="pg-mensajes">
-          <div class="sec-header">
-            <h2>Mensajes</h2>
-            <button class="btn btn-blue" id="btnNewMsg">📨 Nuevo Mensaje</button>
-          </div>
-          <!-- Tabs -->
-          <div style="display:flex;gap:8px;margin-bottom:16px;">
-            <button class="btn btn-blue btn-sm" id="tabAdmin" onclick="switchMsgTab('admin')">📤 Enviados por vos</button>
-            <button class="btn btn-gray btn-sm" id="tabClient" onclick="switchMsgTab('client')">📥 De clientes <span id="clientMsgCount" style="background:#da3633;color:#fff;border-radius:20px;padding:1px 6px;font-size:.65rem;margin-left:4px;display:none;">0</span></button>
-          </div>
-          <div id="msgListAdmin" class="msg-list">
-            <div class="empty"><span class="empty-ic">💬</span><p>Sin mensajes aún</p></div>
-          </div>
-          <div id="msgListClient" class="msg-list" style="display:none;">
-            <div class="empty"><span class="empty-ic">📥</span><p>Sin mensajes de clientes aún</p></div>
-          </div>
-        </div>
-
-        <!-- PACKS -->
-        <div class="page" id="pg-packs">
-          <div class="sec-header">
-            <h2>Packs de Contenido</h2>
-            <button class="btn btn-blue" id="btnNewPack">➕ Nuevo Pack</button>
-          </div>
-          <div class="packs-grid" id="packsGrid">
-            <div class="empty" style="grid-column:1/-1"><span class="empty-ic">📦</span><p>Sin packs aún</p></div>
-          </div>
-        </div>
-
-        <!-- PROYECTOS -->
-        <div class="page" id="pg-proyectos">
-          <div class="sec-header">
-            <h2>Proyectos / Portafolio</h2>
-            <button class="btn btn-blue" id="btnNewProject">➕ Nuevo Proyecto</button>
-          </div>
-          <div class="info-box">
-            Los proyectos aparecen automáticamente en las páginas de servicio según la categoría elegida.
-            <br/>🌐 <a href="../servicos/sites.html" target="_blank" style="color:#58a6ff;">Ver página Sitios Web</a>
-            &nbsp;·&nbsp; 📱 <a href="../servicos/redes.html" target="_blank" style="color:#f87171;">Ver página Redes</a>
-            &nbsp;·&nbsp; ✉️ <a href="../servicos/convites.html" target="_blank" style="color:#34d399;">Ver página Convites</a>
-          </div>
-          <!-- Filtros -->
-          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-            <button class="btn btn-blue btn-sm"  onclick="filterProjects('all')"     id="pf-all">Todos</button>
-            <button class="btn btn-gray btn-sm"  onclick="filterProjects('site')"    id="pf-site">🌐 Sitios Web</button>
-            <button class="btn btn-gray btn-sm"  onclick="filterProjects('redes')"   id="pf-redes">📱 Redes</button>
-            <button class="btn btn-gray btn-sm"  onclick="filterProjects('convite')" id="pf-convite">✉️ Convites</button>
-          </div>
-          <div class="packs-grid" id="projectsAdminGrid">
-            <div class="empty" style="grid-column:1/-1"><span class="empty-ic">🗂️</span><p>Sin proyectos aún. Hacé clic en "Nuevo Proyecto".</p></div>
-          </div>
-        </div>
-
-      </div><!-- /content -->
-    </div><!-- /mainWrap -->
-  </div><!-- /wrapper -->
-</div><!-- /adminApp -->
-
+</main>
 
 <!-- ═══ MODALES ═══ -->
 
-<!-- Modal Usuario -->
-<div class="modal-bg" id="mUser">
-  <div class="modal modal-lg">
-    <div class="modal-hd">
-      <h3 id="mUserTitle">Crear Usuario</h3>
-      <button class="modal-x" data-close>✕</button>
+<!-- SLIDE MODAL -->
+<div class="modal-overlay" id="slideModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('slideModal')">✕</button>
+    <div class="modal-title" id="slideModalTitle">NUEVO SLIDE</div>
+    <input type="hidden" id="editSlideId" />
+    <div class="form-grid">
+      <div class="field"><label>TÍTULO (opcional)</label><input type="text" id="sTitle" placeholder="Texto superpuesto al slide" /></div>
+      <div class="field"><label>CAPTION / DESCRIPCIÓN</label><input type="text" id="sCaption" placeholder="Texto pequeño en esquina inferior" /></div>
+      <div class="field"><label>ORDEN</label><input type="number" id="sOrder" value="0" min="0" /></div>
+      <div class="field"><label>IMAGEN DEL SLIDE</label>
+        <div class="upload-zone" id="slideUploadZone">
+          <div class="icon">📸</div>
+          <p>Clic o arrastrá para subir imagen</p>
+        </div>
+        <div class="upload-progress" id="slideProgress"><div class="upload-progress-bar" id="slideProgressBar"></div></div>
+        <input type="hidden" id="sImageUrl" />
+        <div id="slideImgPreview" class="img-preview"></div>
+      </div>
+      <div class="field"><label>URL AL HACER CLIC (opcional)</label><input type="url" id="sLink" placeholder="https://..." /></div>
     </div>
-    <form id="userForm" autocomplete="off">
-      <div class="fr">
-        <div class="fg"><label>Nombre *</label><input type="text" id="uName" placeholder="Ej: María García" required /></div>
-        <div class="fg"><label>Email *</label><input type="email" id="uEmail" placeholder="cliente@email.com" required /></div>
-      </div>
-      <div class="fr">
-        <div class="fg">
-          <label>Contraseña (referencia)</label>
-          <input type="text" id="uPassword" placeholder="Para Firebase Auth" />
-          <p class="hint">Guardá este dato para crear la cuenta en Firebase Console</p>
-        </div>
-        <div class="fg"><label>Servicio contratado</label><input type="text" id="uService" placeholder="Ej: Diseño Web + Redes" /></div>
-      </div>
-      <div class="fr">
-        <div class="fg"><label>Valor del servicio ($)</label><input type="number" id="uValue" placeholder="Ej: 150000" min="0" /></div>
-        <div class="fg">
-          <label>Estado de pago</label>
-          <div class="radio-row">
-            <label class="radio-opt"><input type="radio" name="pay" value="paid" /> ✅ Pagado</label>
-            <label class="radio-opt"><input type="radio" name="pay" value="open" checked /> ⏳ Pendiente</label>
-          </div>
-        </div>
-      </div>
-      <div class="fg">
-        <label>Archivo de logo</label>
-        <input type="text" id="uLogo" placeholder="Ej: maria.png" autocomplete="off" />
-        <p class="hint">Colocá el archivo en <code>images/usuarios/</code> y escribí solo el nombre.</p>
-        <img id="logoPreview" src="" alt="" style="display:none;width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #30363d;margin-top:8px;" />
-      </div>
-      <div class="firebase-tip" id="fbTip">
-        ⚠️ <strong>Recordá crear la cuenta en Firebase Auth:</strong><br/>
-        <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a>
-        → Authentication → Users → Agregar usuario<br/>
-        Usá el mismo email y la contraseña de arriba.
-      </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
-        <button type="button" class="btn btn-gray" data-close>Cancelar</button>
-        <button type="submit" class="btn btn-blue" id="saveUserBtn">💾 Guardar</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Modal Mensaje -->
-<div class="modal-bg" id="mMsg">
-  <div class="modal">
-    <div class="modal-hd"><h3>📨 Nuevo Mensaje</h3><button class="modal-x" data-close>✕</button></div>
-    <form id="msgForm">
-      <div class="fg">
-        <label>Para</label>
-        <select id="msgTo"><option value="">📢 Todos los usuarios</option></select>
-      </div>
-      <div class="fg">
-        <label>Mensaje *</label>
-        <textarea id="msgTxt" placeholder="Escribí el mensaje acá..." required></textarea>
-      </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;">
-        <button type="button" class="btn btn-gray" data-close>Cancelar</button>
-        <button type="submit" class="btn btn-blue" id="saveMsgBtn">📨 Enviar</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Modal Nuevo Pack -->
-<div class="modal-bg" id="mPack">
-  <div class="modal modal-lg">
-    <div class="modal-hd"><h3 id="mPackTitle">📦 Nuevo Pack</h3><button class="modal-x" data-close>✕</button></div>
-    <form id="packForm" autocomplete="off">
-      <div class="fr">
-        <div class="fg">
-          <label>Título del pack *</label>
-          <input type="text" id="pTitle" placeholder="Ej: Pack Redes Enero" required />
-        </div>
-        <div class="fg">
-          <label>Asignar a</label>
-          <select id="packTo"><option value="">— Todos / Elegir después —</option></select>
-        </div>
-      </div>
-      <div class="fg">
-        <label>Descripción</label>
-        <input type="text" id="pDesc" placeholder="Ej: 10 imágenes para redes sociales" />
-      </div>
-      <div class="fg">
-        <label>Archivos (imágenes o videos) *</label>
-        <input type="file" id="pFiles" multiple accept="image/*,video/*" required />
-        <p class="hint">Podés subir múltiples archivos a la vez. Imágenes y videos.</p>
-      </div>
-      <!-- Progress -->
-      <div id="uploadProgress" style="display:none;margin-top:8px;">
-        <div style="background:#0d1117;border-radius:6px;height:8px;overflow:hidden;margin-bottom:6px;">
-          <div id="progressBar" style="height:100%;background:linear-gradient(90deg,#1f6feb,#0ea5e9);width:0%;transition:width .3s;border-radius:6px;"></div>
-        </div>
-        <p id="progressTxt" style="font-size:.75rem;color:#484f58;">Subiendo archivos...</p>
-      </div>
-      <!-- Preview -->
-      <div id="filePreview" style="display:none;margin-top:10px;">
-        <p style="font-size:.72rem;color:#484f58;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Vista previa</p>
-        <div id="previewGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;"></div>
-      </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
-        <button type="button" class="btn btn-gray" data-close>Cancelar</button>
-        <button type="submit" class="btn btn-blue" id="savePackBtn">☁️ Subir y Guardar</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Modal Asignar Pack a usuario -->
-<div class="modal-bg" id="mAssign">
-  <div class="modal">
-    <div class="modal-hd"><h3>👤 Asignar Pack</h3><button class="modal-x" data-close>✕</button></div>
-    <form id="assignForm">
-      <input type="hidden" id="assignPackId" />
-      <div class="fg">
-        <label>Asignar a</label>
-        <select id="assignTo" required><option value="">— Seleccionar usuario —</option></select>
-      </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
-        <button type="button" class="btn btn-gray" data-close>Cancelar</button>
-        <button type="submit" class="btn btn-green">✅ Asignar</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Modal Confirmar -->
-<div class="modal-bg" id="mConfirm">
-  <div class="modal confirm-box">
-    <span class="ic">⚠️</span>
-    <h3 style="font-family:'Syne',sans-serif;font-size:.98rem;font-weight:700;color:#f0f6fc;margin-bottom:8px;">¿Confirmás?</h3>
-    <p id="confirmTxt"></p>
-    <div class="btn-row">
-      <button class="btn btn-gray" id="confirmNo">Cancelar</button>
-      <button class="btn btn-red"  id="confirmSi">Sí, confirmar</button>
+    <div class="modal-footer">
+      <button class="btn btn-outline-g" onclick="closeModal('slideModal')">CANCELAR</button>
+      <button class="btn btn-green" id="saveSlideBtn">GUARDAR SLIDE</button>
     </div>
   </div>
 </div>
 
-<!-- Modal Nuevo Proyecto -->
-<div class="modal-bg" id="mProject">
-  <div class="modal modal-lg">
-    <div class="modal-hd"><h3 id="mProjectTitle">➕ Nuevo Proyecto</h3><button class="modal-x" data-close>✕</button></div>
-    <form id="projectForm" autocomplete="off">
-      <div class="fr">
-        <div class="fg">
-          <label>Título del proyecto *</label>
-          <input type="text" id="prjTitle" placeholder="Ej: Sitio para Restaurante Bella" required/>
-        </div>
-        <div class="fg">
-          <label>Categoría *</label>
-          <select id="prjCategory" required>
-            <option value="">— Seleccionar —</option>
-            <option value="site">🌐 Sitio Web</option>
-            <option value="redes">📱 Redes Sociales</option>
-            <option value="convite">✉️ Convite Digital</option>
-          </select>
-        </div>
+<!-- MENU ITEM MODAL -->
+<div class="modal-overlay" id="menuModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('menuModal')">✕</button>
+    <div class="modal-title" id="menuModalTitle">NUEVO ÍTEM DE MENÚ</div>
+    <input type="hidden" id="editMenuId" />
+    <div class="form-grid">
+      <div class="field"><label>ETIQUETA *</label><input type="text" id="mLabel" placeholder="ej: Servicios" /></div>
+      <div class="field"><label>URL</label><input type="text" id="mUrl" placeholder="ej: #servicios o https://..." /></div>
+      <div class="field"><label>ÍTEM PADRE (para dropdown)</label>
+        <select id="mParent"><option value="">Ninguno (ítem raíz)</option></select>
       </div>
-      <div class="fg">
-        <label>Descripción</label>
-        <input type="text" id="prjDesc" placeholder="Breve descripción del proyecto"/>
-      </div>
-      <div class="fg">
-        <label>Link del proyecto</label>
-        <input type="url" id="prjLink" placeholder="https://..."/>
-        <p class="hint">URL para que el visitante pueda ver el proyecto completo</p>
-      </div>
-      <div class="fg">
-        <label>Imagen del proyecto *</label>
-        <input type="file" id="prjImage" accept="image/*" required/>
-        <p class="hint">Imagen nítida del proyecto. Recomendado: 1200×800px o más.</p>
-        <div id="prjPreviewWrap" style="display:none;margin-top:10px;">
-          <img id="prjPreview" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;border:1px solid #21262d;"/>
-        </div>
-      </div>
-      <!-- Upload progress -->
-      <div id="prjProgress" style="display:none;margin-top:8px;">
-        <div style="background:#0d1117;border-radius:6px;height:6px;overflow:hidden;margin-bottom:6px;">
-          <div id="prjProgressBar" style="height:100%;background:linear-gradient(90deg,#1f6feb,#0ea5e9);width:0%;transition:width .3s;border-radius:6px;"></div>
-        </div>
-        <p id="prjProgressTxt" style="font-size:.72rem;color:#484f58;">Subiendo imagen...</p>
-      </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
-        <button type="button" class="btn btn-gray" data-close>Cancelar</button>
-        <button type="submit" class="btn btn-blue" id="saveProjectBtn">☁️ Guardar Proyecto</button>
-      </div>
-    </form>
+      <div class="field"><label>ORDEN</label><input type="number" id="mOrder" value="0" min="0" /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline-g" onclick="closeModal('menuModal')">CANCELAR</button>
+      <button class="btn btn-green" id="saveMenuItemBtn">GUARDAR</button>
+    </div>
   </div>
 </div>
 
+<!-- USER MODAL -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('userModal')">✕</button>
+    <div class="modal-title" id="userModalTitle">NUEVO USUARIO</div>
+    <input type="hidden" id="editUserId" />
+    <div class="form-grid">
+      <div class="form-grid form-grid-2">
+        <div class="field"><label>NOMBRE *</label><input type="text" id="uName" placeholder="Nombre completo" /></div>
+        <div class="field"><label>EMAIL *</label><input type="email" id="uEmail" placeholder="cliente@email.com" /></div>
+      </div>
+      <div class="field"><label>CONTRASEÑA TEMPORAL</label><input type="password" id="uPass" placeholder="Min 6 caracteres" autocomplete="new-password" /></div>
+      <div class="field"><label>SERVICIO CONTRATADO</label>
+        <select id="uService">
+          <option value="">Seleccionar</option>
+          <option value="web">Sitio Web</option>
+          <option value="social">Redes Sociales</option>
+          <option value="invitation">Invitaciones</option>
+          <option value="pack">Paquete Completo</option>
+        </select>
+      </div>
+      <div class="field"><label>WHATSAPP</label><input type="tel" id="uPhone" placeholder="+54 9..." /></div>
+      <div class="field"><label>NOTAS INTERNAS</label><textarea id="uNotes" rows="2" placeholder="Notas privadas del cliente..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline-g" onclick="closeModal('userModal')">CANCELAR</button>
+      <button class="btn btn-green" id="saveUserBtn">GUARDAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- QUILL -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
 <script type="module" src="js/admin.js?v=2.0.0"></script>
 </body>
 </html>

@@ -1,600 +1,198 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es-AR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-
-  <!-- ===== SEO BÁSICO ===== -->
-  <title>HS Gestión | Diseño Web, Redes Sociales e Invitaciones Digitales en Argentina</title>
-  <meta name="description" content="HS Gestión ofrece servicios de creación de sitios web profesionales, gestión de redes sociales e invitaciones digitales en Argentina. Transformamos tu presencia digital. Consultá sin compromiso." />
-  <meta name="keywords" content="diseño web Argentina, páginas web Argentina, gestión redes sociales Argentina, invitaciones digitales, HS Gestión, creación de páginas web, marketing digital Argentina, diseño web Buenos Aires" />
-  <meta name="author" content="HS Gestión" />
-  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-  <meta name="language" content="es-AR" />
-  <meta name="google-site-verification" content="4pGecFG9UeIBualCKi6T5QbVqabXwl-UdkmL5V7M-us" />
-  <link rel="canonical" href="https://www.hsgestion.com.ar/" />
-
-  <!-- ===== OPEN GRAPH (Facebook/LinkedIn/WhatsApp) ===== -->
-  <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="HS Gestión" />
-  <meta property="og:title" content="HS Gestión | Diseño Web, Redes Sociales e Invitaciones Digitales" />
-  <meta property="og:description" content="Transformamos tu presencia digital en Argentina. Sitios web profesionales, gestión de redes sociales e invitaciones digitales únicas. Consultá sin compromiso." />
-  <meta property="og:url" content="https://www.hsgestion.com.ar/" />
-  <meta property="og:image" content="https://www.hsgestion.com.ar/images/og-image.jpg" />
-  <meta property="og:locale" content="es_AR" />
-
-  <!-- ===== TWITTER CARD ===== -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="HS Gestión | Diseño Web y Redes Sociales en Argentina" />
-  <meta name="twitter:description" content="Transformamos tu presencia digital. Sitios web, redes sociales e invitaciones digitales." />
-  <meta name="twitter:image" content="https://www.hsgestion.com.ar/images/og-image.jpg" />
-
-  <!-- ===== GEO SEO ===== -->
-  <meta name="geo.region" content="AR" />
-  <meta name="geo.country" content="Argentina" />
-
-  <!-- ===== SCHEMA.ORG STRUCTURED DATA ===== -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": "HS Gestión",
-    "description": "Empresa de servicios digitales en Argentina especializada en creación de sitios web, gestión de redes sociales e invitaciones digitales.",
-    "url": "https://www.hsgestion.com.ar",
-    "telephone": "+5513981763452",
-    "sameAs": [
-      "https://wa.me/5513981763452"
-    ],
-    "address": {
-      "@type": "PostalAddress",
-      "addressCountry": "AR"
-    },
-    "areaServed": "Argentina",
-    "serviceType": [
-      "Diseño Web",
-      "Gestión de Redes Sociales",
-      "Invitaciones Digitales"
-    ],
-    "priceRange": "Consultar",
-    "image": "https://www.hsgestion.com.ar/images/logo.png",
-    "contactPoint": {
-      "@type": "ContactPoint",
-      "telephone": "+5513981763452",
-      "contactType": "customer service",
-      "availableLanguage": "Spanish"
-    }
-  }
-  </script>
-
-  <!-- ===== PRECONNECT ===== -->
+  <title>HS Gestión | Diseño Web, Redes Sociales e Invitaciones Digitales</title>
+  <meta name="description" content="HS Gestión - Agencia digital en Argentina. Diseño web, redes sociales e invitaciones digitales." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-  <!-- ===== FAVICON (inline SVG fallback) ===== -->
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
-
-  <!-- ===== STYLES WITH VERSION (cache busting) ===== -->
-  <link rel="stylesheet" href="css/styles.css?v=1.0.0" />
-
-  <!-- ===== PERFORMANCE ===== -->
-  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="css/home.css?v=2.0.0" />
 </head>
 <body>
+<div id="pageLoader"><div class="loader-text">// INICIALIZANDO HS_GESTIÓN...</div><div class="loader-bar"><div class="loader-fill"></div></div></div>
+<div id="cursor"></div>
+<div id="cursor-trail"></div>
 
-  <!-- Background Effects -->
-  <div class="bg-grid" aria-hidden="true"></div>
-  <div class="bg-particles" id="particles" aria-hidden="true"></div>
-
-  <!-- ===== LOGIN MODAL ===== -->
-  <div class="modal-overlay" id="loginModal" role="dialog" aria-modal="true" aria-label="Iniciar sesión">
-    <div class="modal-box">
-      <button class="modal-close" id="closeLogin" aria-label="Cerrar">✕</button>
-      <div class="modal-logo">
-        <img src="images/logo.png" alt="HS Gestión logo" loading="lazy" />
+<header id="header">
+  <div class="container">
+    <nav class="nav-inner">
+      <a href="#" class="logo">
+        <img src="images/logo.png" alt="HS Gestión" onerror="this.style.display='none'" />
+        <span class="logo-text">HS_GESTIÓN</span>
+      </a>
+      <ul id="dynMenu"></ul>
+      <div class="nav-right">
+        <button class="btn-login" id="loginTrigger"><span class="dot"></span>ACCEDER</button>
+        <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
       </div>
-      <h2 class="modal-title">Iniciar Sesión</h2>
-      <p class="modal-sub">Administradores y clientes acceden aquí</p>
-      <form id="loginForm" class="modal-form" novalidate>
-        <div class="form-group">
-          <label for="loginEmail">Correo electrónico</label>
-          <input type="email" id="loginEmail" placeholder="tu@email.com" required autocomplete="email" />
-        </div>
-        <div class="form-group">
-          <label for="loginPass">Contraseña</label>
-          <input type="password" id="loginPass" placeholder="••••••••" required autocomplete="current-password" />
-        </div>
-        <button type="submit" id="loginSubmitBtn" class="btn-primary" style="width:100%;justify-content:center;margin-top:8px">
-          Iniciar Sesión
-        </button>
-        <div id="loginError" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;color:#f87171;font-size:.85rem;text-align:center;"></div>
-      </form>
-      <div class="modal-firebase-note">
-        🔐 El sistema detecta automáticamente si sos administrador o cliente
+    </nav>
+  </div>
+</header>
+
+<div id="loginPanel">
+  <div class="login-header">
+    <span class="login-title">// AUTENTICACIÓN</span>
+    <button class="login-close" id="loginClose">✕</button>
+  </div>
+  <div class="login-field"><label>EMAIL</label><input type="email" id="loginEmail" placeholder="usuario@dominio.com" autocomplete="email" /></div>
+  <div class="login-field"><label>CONTRASEÑA</label><input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" /></div>
+  <button class="btn-login-submit" id="loginSubmitBtn">INICIAR_SESIÓN()</button>
+  <div id="loginError"></div>
+</div>
+
+<section id="hero">
+  <div class="slider-wrap" id="sliderWrap">
+    <div class="slide active" id="defaultSlide">
+      <div class="slide-bg no-img grid-bg"></div>
+      <canvas class="slide-matrix" id="matrixCanvas"></canvas>
+    </div>
+  </div>
+  <div class="hero-content-wrap">
+    <div class="container">
+      <div class="hero-badge"><span class="pulse"></span>AGENCIA DIGITAL · ARGENTINA</div>
+      <h1 class="hero-title">
+        <span class="line1 glitch" data-text="DISEÑAMOS TU">DISEÑAMOS TU</span>
+        <span class="line2">PRESENCIA DIGITAL</span>
+      </h1>
+      <p class="hero-sub"><span id="typedText"></span><span class="typed-cursor">_</span></p>
+      <div class="hero-actions">
+        <a href="#contacto" class="btn-primary"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>CONSULTAR</a>
+        <a href="#blog" class="btn-outline"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>VER BLOG</a>
       </div>
     </div>
   </div>
+  <div class="hero-glitch-num" id="glitchNums"></div>
+  <div class="slider-dots" id="sliderDots"></div>
+  <button class="slider-arrow slider-prev" id="sliderPrev">&#8249;</button>
+  <button class="slider-arrow slider-next" id="sliderNext">&#8250;</button>
+  <div class="slider-progress" id="sliderProgress"></div>
+</section>
 
-  <!-- ===== HEADER ===== -->
-  <header id="header">
-    <div class="container">
-      <nav aria-label="Navegación principal">
-        <a href="#hero" class="logo" aria-label="HS Gestión - Inicio">
-          <img src="images/logo.png" alt="HS Gestión" width="120" height="48" />
-        </a>
+<div class="ticker-bar">
+  <div class="ticker-inner">
+    <span class="ticker-item"><span class="ticker-sep">▶</span> DISEÑO WEB PROFESIONAL</span>
+    <span class="ticker-item"><span class="ticker-sep">▶</span> GESTIÓN DE REDES SOCIALES</span>
+    <span class="ticker-item"><span class="ticker-sep">▶</span> INVITACIONES DIGITALES</span>
+    <span class="ticker-item"><span class="ticker-sep">▶</span> MARKETING DIGITAL ARGENTINA</span>
+    <span class="ticker-item"><span class="ticker-sep">▶</span> POSICIONAMIENTO SEO</span>
+    <span class="ticker-item"><span class="ticker-sep">▶</span> DISEÑO WEB PROFESIONAL</span>
+    <span class="ticker-item"><span class="ticker-sep">▶</span> GESTIÓN DE REDES SOCIALES</span>
+    <span class="ticker-item"><span class="ticker-sep">▶</span> INVITACIONES DIGITALES</span>
+    <span class="ticker-item"><span class="ticker-sep">▶</span> MARKETING DIGITAL ARGENTINA</span>
+    <span class="ticker-item"><span class="ticker-sep">▶</span> POSICIONAMIENTO SEO</span>
+  </div>
+</div>
 
-        <ul class="nav-links" id="navLinks" role="list">
-          <li><a href="#hero">Inicio</a></li>
-          <li><a href="#servicios">Servicios</a></li>
-          <li><a href="servicos/sites.html">Sitios Web</a></li>
-          <li><a href="#proceso">Proceso</a></li>
-          <li><a href="#contacto">Contacto</a></li>
-          <li class="mobile-login-btn">
-            <button class="btn-outline" style="width:100%;justify-content:center;font-size:.9rem;padding:10px 20px;" data-open-login>
-              🔐 Iniciar Sesión
-            </button>
-          </li>
-        </ul>
+<section id="blog" class="section">
+  <div class="container">
+    <div class="section-tag center">// BLOG</div>
+    <h2 class="section-title reveal">Últimos <span>Artículos</span></h2>
+    <p class="section-sub reveal">Insights, tutoriales y novedades del mundo digital</p>
+    <div class="blog-grid" id="blogGrid"><div class="blog-empty"><div style="font-size:2rem;margin-bottom:12px">📡</div>Cargando artículos...</div></div>
+    <div class="blog-more" id="blogMore" style="display:none"><button class="btn-outline" id="loadMoreBtn">CARGAR MÁS</button></div>
+  </div>
+</section>
 
-        <div class="nav-cta">
-          <button class="btn-outline" style="font-size:0.9rem;padding:10px 20px;" data-open-login>
-            Iniciar Sesión
-          </button>
-          <a href="#contacto" class="btn-primary" style="font-size:0.9rem;padding:10px 20px;">
-            Consultá Ya
+<section id="servicios" class="section alt">
+  <div class="container">
+    <div class="section-tag center">// SERVICIOS</div>
+    <h2 class="section-title reveal">Lo que <span>Hacemos</span></h2>
+    <p class="section-sub reveal">Soluciones digitales para hacer crecer tu negocio</p>
+    <div class="services-grid">
+      <div class="service-card reveal">
+        <div class="service-icon">🌐</div>
+        <div class="service-title">CREACIÓN DE SITIOS WEB</div>
+        <p class="service-desc">Sitios modernos, rápidos y optimizados para SEO. Diseño a medida para tu marca.</p>
+        <span class="service-tag">RESPONSIVE</span><span class="service-tag">SEO</span><span class="service-tag">RÁPIDO</span>
+      </div>
+      <div class="service-card reveal" style="transition-delay:.1s">
+        <div class="service-icon">📱</div>
+        <div class="service-title">GESTIÓN DE REDES SOCIALES</div>
+        <p class="service-desc">Contenido estratégico para Instagram, Facebook y TikTok. Crecimiento real.</p>
+        <span class="service-tag">INSTAGRAM</span><span class="service-tag">TIKTOK</span><span class="service-tag">ADS</span>
+      </div>
+      <div class="service-card reveal" style="transition-delay:.2s">
+        <div class="service-icon">✉️</div>
+        <div class="service-title">INVITACIONES DIGITALES</div>
+        <p class="service-desc">Invitaciones únicas con animaciones, RSVP y contador regresivo.</p>
+        <span class="service-tag">ANIMADO</span><span class="service-tag">WHATSAPP</span><span class="service-tag">RSVP</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contacto" class="section">
+  <div class="container">
+    <div class="section-tag center">// CONTACTO</div>
+    <h2 class="section-title reveal">Hablemos de tu <span>Proyecto</span></h2>
+    <p class="section-sub reveal">Sin compromiso. Respondemos a la brevedad.</p>
+    <div class="contact-inner">
+      <div class="contact-info reveal">
+        <h2>Tu negocio en el <span>mundo digital</span></h2>
+        <p>Cada proyecto es único. Primero escuchamos, luego creamos soluciones que realmente funcionan.</p>
+        <div class="contact-links">
+          <a href="https://wa.me/5513981763452" class="contact-link" target="_blank" rel="noopener">
+            <div class="contact-link-icon">💬</div>
+            <div><div class="contact-link-label">WHATSAPP</div><div class="contact-link-val">+55 13 98176-3452</div></div>
+          </a>
+          <a href="mailto:contacto@hsgestion.com.ar" class="contact-link">
+            <div class="contact-link-icon">✉️</div>
+            <div><div class="contact-link-label">EMAIL</div><div class="contact-link-val">contacto@hsgestion.com.ar</div></div>
           </a>
         </div>
-
-        <button class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
-          <span></span><span></span><span></span>
+      </div>
+      <form class="contact-form reveal" id="contactForm">
+        <div class="form-row">
+          <div class="form-group"><label>NOMBRE *</label><input type="text" id="firstName" required placeholder="Tu nombre" /></div>
+          <div class="form-group"><label>APELLIDO</label><input type="text" id="lastName" placeholder="Tu apellido" /></div>
+        </div>
+        <div class="form-group"><label>EMAIL *</label><input type="email" id="contactEmail" required placeholder="tu@email.com" /></div>
+        <div class="form-group"><label>WHATSAPP</label><input type="tel" id="phone" placeholder="+54 9 11 0000-0000" /></div>
+        <div class="form-group">
+          <label>SERVICIO *</label>
+          <select id="service" required>
+            <option value="" disabled selected>Seleccioná un servicio</option>
+            <option value="web">Sitio Web</option>
+            <option value="social">Redes Sociales</option>
+            <option value="invitation">Invitaciones Digitales</option>
+            <option value="pack">Paquete Completo</option>
+            <option value="other">Otro</option>
+          </select>
+        </div>
+        <div class="form-group"><label>MENSAJE</label><textarea id="message" rows="3" placeholder="Contanos tu proyecto..."></textarea></div>
+        <button type="submit" class="btn-primary" style="justify-content:center;width:100%">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          ENVIAR_CONSULTA()
         </button>
-      </nav>
+      </form>
     </div>
-  </header>
+  </div>
+</section>
 
-  <!-- ===== HERO ===== -->
-  <section id="hero" aria-label="Inicio">
-    <div class="hero-bg" aria-hidden="true"></div>
-    <div class="container">
-      <div class="hero-content">
-
-        <div class="hero-text">
-          <div class="eyebrow reveal" data-delay="0">
-            Agencia Digital en Argentina
-          </div>
-          <h1 class="hero-headline reveal" data-delay="100">
-            Diseñamos tu<br /><span>Presencia Digital</span>
-          </h1>
-          <p class="hero-tagline reveal" data-delay="150">
-            Sitios web · Redes Sociales · Invitaciones
-          </p>
-          <p class="hero-desc reveal" data-delay="200">
-            En HS Gestión transformamos tu marca en una experiencia digital memorable. 
-            Creamos sitios web profesionales, gestionamos tus redes y diseñamos 
-            invitaciones digitales únicas para destacarte en Argentina.
-          </p>
-          <div class="hero-actions reveal" data-delay="250">
-            <a href="#contacto" class="btn-primary">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-              </svg>
-              Consultá Gratis
-            </a>
-            <a href="#servicios" class="btn-outline">
-              Ver Servicios
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-              </svg>
-            </a>
-          </div>
-
-          <div class="hero-stats reveal" data-delay="300">
-            <div class="stat-item">
-              <div class="stat-number" data-count="50" data-suffix="+">0+</div>
-              <div class="stat-label">Proyectos</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number" data-count="100" data-suffix="%">0%</div>
-              <div class="stat-label">Satisfacción</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number" data-count="3" data-suffix="">0</div>
-              <div class="stat-label">Servicios</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="hero-image-wrap reveal-right" data-delay="100">
-          <div class="hero-image-frame">
-            <div class="hero-orbit" aria-hidden="true">
-              <div class="orbit-dot"></div>
-            </div>
-            <img 
-              src="images/profile.jpg" 
-              alt="Profesional de HS Gestión" 
-              class="hero-img"
-              width="400"
-              height="400"
-              loading="eager"
-            />
-          </div>
-        </div>
-
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <img src="images/logo.png" alt="HS Gestión" onerror="this.style.display='none'" />
+        <p>Agencia digital especializada en diseño web, redes sociales e invitaciones digitales en Argentina.</p>
       </div>
+      <div class="footer-col"><h4>SERVICIOS</h4><ul class="footer-links"><li><a href="#servicios">→ Sitios Web</a></li><li><a href="#servicios">→ Redes Sociales</a></li><li><a href="#servicios">→ Invitaciones</a></li></ul></div>
+      <div class="footer-col"><h4>NAVEGACIÓN</h4><ul class="footer-links" id="footerLinks"><li><a href="#hero">→ Inicio</a></li><li><a href="#blog">→ Blog</a></li><li><a href="#contacto">→ Contacto</a></li></ul></div>
     </div>
-  </section>
-
-  <!-- ===== SERVICES ===== -->
-  <section id="servicios" aria-label="Nuestros servicios">
-    <div class="container">
-      <h2 class="section-title reveal">Nuestros Servicios</h2>
-      <p class="section-subtitle reveal" data-delay="100">
-        Soluciones digitales integrales para hacer crecer tu negocio en Argentina y el mundo
-      </p>
-
-      <div class="services-grid">
-
-        <!-- Diseño Web -->
-        <article class="service-card reveal" data-delay="0">
-          <div class="service-icon" aria-hidden="true">🌐</div>
-          <h3 class="service-title">Creación de Sitios Web</h3>
-          <p class="service-desc">
-            Desarrollamos sitios web modernos, rápidos y optimizados para motores de búsqueda. 
-            Tu presencia profesional en internet, diseñada a medida.
-          </p>
-          <ul class="service-features" aria-label="Características del servicio">
-            <li>Diseño responsive para todos los dispositivos</li>
-            <li>Optimizado para SEO y Google</li>
-            <li>Velocidad de carga ultrarrápida</li>
-            <li>Panel de administración intuitivo</li>
-            <li>Dominio y hosting incluidos (a consultar)</li>
-          </ul>
-          <a href="#contacto" class="service-cta">
-            Consultá este servicio
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-            </svg>
-          </a>
-        </article>
-
-        <!-- Redes Sociales -->
-        <article class="service-card reveal" data-delay="100">
-          <div class="service-icon" aria-hidden="true">📱</div>
-          <h3 class="service-title">Gestión de Redes Sociales</h3>
-          <p class="service-desc">
-            Gestionamos tus cuentas de Instagram, Facebook, TikTok y más. 
-            Contenido de calidad, crecimiento real y comunidad comprometida.
-          </p>
-          <ul class="service-features" aria-label="Características del servicio">
-            <li>Estrategia de contenido personalizada</li>
-            <li>Diseño gráfico profesional</li>
-            <li>Gestión de publicaciones diarias</li>
-            <li>Análisis de métricas e informes</li>
-            <li>Campañas publicitarias (Facebook Ads)</li>
-          </ul>
-          <a href="#contacto" class="service-cta">
-            Consultá este servicio
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-            </svg>
-          </a>
-        </article>
-
-        <!-- Invitaciones Digitales -->
-        <article class="service-card reveal" data-delay="200">
-          <div class="service-icon" aria-hidden="true">✉️</div>
-          <h3 class="service-title">Invitaciones Digitales</h3>
-          <p class="service-desc">
-            Invitaciones digitales únicas y personalizadas para bodas, cumpleaños, 
-            eventos corporativos y más. Compartí por WhatsApp con un click.
-          </p>
-          <ul class="service-features" aria-label="Características del servicio">
-            <li>Diseño 100% personalizado</li>
-            <li>Animaciones e interactividad</li>
-            <li>RSVP online integrado</li>
-            <li>Compartible por WhatsApp y redes</li>
-            <li>Contador regresivo de evento</li>
-          </ul>
-          <a href="#contacto" class="service-cta">
-            Consultá este servicio
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-            </svg>
-          </a>
-        </article>
-
-      </div>
+    <div class="footer-bottom">
+      <p>© 2025 <a href="#">HS Gestión</a> · Todos los derechos reservados.</p>
+      <p>Diseñado con 💚 en Argentina</p>
     </div>
-  </section>
+  </div>
+</footer>
 
-  <!-- ===== ABOUT ===== -->
-  <section id="nosotros" aria-label="Acerca de HS Gestión">
-    <div class="container">
-      <div class="about-inner reveal">
-        <div class="about-grid">
+<a href="https://wa.me/5513981763452?text=Hola%20HS%20Gestión!" class="wa-float" target="_blank" rel="noopener">
+  <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+</a>
 
-          <div class="about-image-side">
-            <img 
-              src="images/profile.jpg" 
-              alt="Equipo de HS Gestión" 
-              loading="lazy"
-              width="600"
-              height="700"
-            />
-            <div class="about-image-overlay" aria-hidden="true"></div>
-          </div>
-
-          <div class="about-content">
-            <div class="about-tag">¿Quiénes somos?</div>
-            <h2 class="about-title">
-              Impulsamos tu negocio en el <span>mundo digital</span>
-            </h2>
-            <p class="about-text">
-              Somos <strong>HS Gestión</strong>, una agencia digital especializada en transformar 
-              la presencia online de empresas y emprendedores en Argentina. 
-              Creemos que cada negocio merece una identidad digital poderosa, profesional y efectiva.
-            </p>
-            <p class="about-text">
-              Nos apasiona el diseño, la tecnología y los resultados. Trabajamos de cerca con cada 
-              cliente para entender sus objetivos y crear soluciones digitales que realmente funcionen.
-            </p>
-
-            <div class="about-values">
-              <div class="value-item">
-                <div class="value-icon" aria-hidden="true">🎯</div>
-                <div class="value-text">
-                  <h4>Enfoque en Resultados</h4>
-                  <p>Cada acción orientada a tu crecimiento</p>
-                </div>
-              </div>
-              <div class="value-item">
-                <div class="value-icon" aria-hidden="true">⚡</div>
-                <div class="value-text">
-                  <h4>Entrega Rápida</h4>
-                  <p>Tiempos ágiles sin sacrificar calidad</p>
-                </div>
-              </div>
-              <div class="value-item">
-                <div class="value-icon" aria-hidden="true">🛡️</div>
-                <div class="value-text">
-                  <h4>Soporte Continuo</h4>
-                  <p>Acompañamiento post-entrega siempre</p>
-                </div>
-              </div>
-              <div class="value-item">
-                <div class="value-icon" aria-hidden="true">🎨</div>
-                <div class="value-text">
-                  <h4>Diseño Único</h4>
-                  <p>Creatividad al servicio de tu marca</p>
-                </div>
-              </div>
-            </div>
-
-            <a href="#contacto" class="btn-primary">
-              Hablemos de tu proyecto
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-              </svg>
-            </a>
-          </div>
-
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== PROCESS ===== -->
-  <section id="proceso" aria-label="Nuestro proceso de trabajo">
-    <div class="container">
-      <h2 class="section-title reveal">¿Cómo Trabajamos?</h2>
-      <p class="section-subtitle reveal" data-delay="100">
-        Un proceso claro y transparente para que tu proyecto llegue al éxito
-      </p>
-
-      <div class="process-grid reveal" data-delay="150">
-        <div class="process-step">
-          <div class="step-number">01</div>
-          <div class="step-icon" aria-hidden="true">💬</div>
-          <h3 class="step-title">Consulta Inicial</h3>
-          <p class="step-desc">
-            Nos contactás y charlamos sobre tu proyecto, objetivos y necesidades sin compromiso.
-          </p>
-        </div>
-        <div class="process-step">
-          <div class="step-number">02</div>
-          <div class="step-icon" aria-hidden="true">📋</div>
-          <h3 class="step-title">Propuesta</h3>
-          <p class="step-desc">
-            Diseñamos una propuesta personalizada con estrategia, plazos y todo lo que necesitás.
-          </p>
-        </div>
-        <div class="process-step">
-          <div class="step-number">03</div>
-          <div class="step-icon" aria-hidden="true">🚀</div>
-          <h3 class="step-title">Desarrollo</h3>
-          <p class="step-desc">
-            Ejecutamos el proyecto con revisiones periódicas y comunicación constante con vos.
-          </p>
-        </div>
-        <div class="process-step">
-          <div class="step-number">04</div>
-          <div class="step-icon" aria-hidden="true">✅</div>
-          <h3 class="step-title">Entrega y Soporte</h3>
-          <p class="step-desc">
-            Lanzamos tu proyecto y te acompañamos con soporte continuo para maximizar resultados.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== CONTACT ===== -->
-  <section id="contacto" aria-label="Contacto">
-    <div class="container">
-      <h2 class="section-title reveal">¿Listo para empezar?</h2>
-      <p class="section-subtitle reveal" data-delay="100">
-        Consultanos sin compromiso. Te respondemos a la brevedad.
-      </p>
-
-      <div class="contact-wrapper">
-        <div class="contact-info reveal-left">
-          <h2>
-            Hablemos de tu<br /><span>próximo proyecto</span>
-          </h2>
-          <p>
-            Cada negocio es único. Por eso, primero escuchamos y entendemos lo que necesitás 
-            antes de proponer cualquier solución. Escribinos y juntos encontramos el camino.
-          </p>
-
-          <div class="contact-methods">
-            <a 
-              href="https://wa.me/5513981763452?text=Hola%20HS%20Gestión!%20Me%20gustaría%20consultar%20sobre%20sus%20servicios." 
-              class="contact-method"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Contactar por WhatsApp"
-            >
-              <div class="contact-method-icon">💬</div>
-              <div class="contact-method-text">
-                <span>WhatsApp</span>
-                <strong>+55 13 98176-3452</strong>
-              </div>
-            </a>
-
-            <a href="mailto:contacto@hsgestion.com.ar" class="contact-method" aria-label="Enviar email">
-              <div class="contact-method-icon">✉️</div>
-              <div class="contact-method-text">
-                <span>Email</span>
-                <strong>contacto@hsgestion.com.ar</strong>
-              </div>
-            </a>
-
-            <div class="contact-method" style="cursor:default;">
-              <div class="contact-method-icon">📍</div>
-              <div class="contact-method-text">
-                <span>Cobertura</span>
-                <strong>Todo Argentina · 100% Online</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="contact-form-wrap reveal-right" data-delay="100">
-          <form id="contactForm" novalidate>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="firstName">Nombre *</label>
-                <input type="text" id="firstName" placeholder="Tu nombre" required autocomplete="given-name" />
-              </div>
-              <div class="form-group">
-                <label for="lastName">Apellido</label>
-                <input type="text" id="lastName" placeholder="Tu apellido" autocomplete="family-name" />
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="email">Correo electrónico *</label>
-              <input type="email" id="email" placeholder="tu@email.com" required autocomplete="email" />
-            </div>
-
-            <div class="form-group">
-              <label for="phone">WhatsApp / Teléfono</label>
-              <input type="tel" id="phone" placeholder="+54 9 11 0000-0000" autocomplete="tel" />
-            </div>
-
-            <div class="form-group">
-              <label for="service">Servicio de interés *</label>
-              <select id="service" required>
-                <option value="" disabled selected>Seleccioná un servicio</option>
-                <option value="web">Creación de Sitio Web</option>
-                <option value="social">Gestión de Redes Sociales</option>
-                <option value="invitation">Invitaciones Digitales</option>
-                <option value="pack">Paquete Completo</option>
-                <option value="other">Otro / Consulta general</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="message">Contanos sobre tu proyecto</label>
-              <textarea id="message" placeholder="Describí brevemente qué necesitás, tu negocio o evento..."></textarea>
-            </div>
-
-            <button type="submit" class="btn-primary form-submit">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-              </svg>
-              Enviar Consulta
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== FOOTER ===== -->
-  <footer>
-    <div class="container">
-      <div class="footer-grid">
-
-        <div class="footer-brand">
-          <img src="images/logo.png" alt="HS Gestión logo" loading="lazy" />
-          <p>
-            Agencia digital especializada en diseño web, gestión de redes sociales 
-            e invitaciones digitales en Argentina. Tu transformación digital comienza acá.
-          </p>
-        </div>
-
-        <div class="footer-col">
-          <h4>Servicios</h4>
-          <ul class="footer-links">
-            <li><a href="#servicios">→ Creación de Sitios Web</a></li>
-            <li><a href="#servicios">→ Gestión de Redes Sociales</a></li>
-            <li><a href="#servicios">→ Invitaciones Digitales</a></li>
-          </ul>
-        </div>
-
-        <div class="footer-col">
-          <h4>Navegación</h4>
-          <ul class="footer-links">
-            <li><a href="#hero">→ Inicio</a></li>
-            <li><a href="#nosotros">→ Nosotros</a></li>
-            <li><a href="#proceso">→ Proceso</a></li>
-            <li><a href="#contacto">→ Contacto</a></li>
-          </ul>
-        </div>
-
-      </div>
-
-      <div class="footer-bottom">
-        <p>© 2025 <a href="#hero">HS Gestión</a>. Todos los derechos reservados.</p>
-        <p style="font-size:0.8rem;color:var(--text-muted)">
-          Diseñado con 💙 en Argentina
-        </p>
-      </div>
-    </div>
-  </footer>
-
-  <!-- ===== WHATSAPP FLOAT ===== -->
-  <a 
-    href="https://wa.me/5513981763452?text=Hola%20HS%20Gestión!%20Me%20gustaría%20consultar%20sobre%20sus%20servicios."
-    class="whatsapp-float"
-    target="_blank"
-    rel="noopener noreferrer"
-    aria-label="Contactar por WhatsApp"
-  >
-    <span class="whatsapp-tooltip">¡Chateá con nosotros!</span>
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-    </svg>
-  </a>
-
-  <!-- ===== JS WITH VERSION (cache busting) ===== -->
-  <script src="js/main.js?v=1.0.0" defer></script>
-  <!-- Firebase Auth Login -->
-  <script type="module" src="js/firebase-login.js?v=1.0.0"></script>
-
-  <!-- ===== SITEMAP HINT FOR ROBOTS ===== -->
-  <!-- robots.txt: User-agent: * | Allow: / | Sitemap: https://www.hsgestion.com.ar/sitemap.xml -->
-
+<script type="module" src="js/home.js?v=2.0.0"></script>
 </body>
 </html>

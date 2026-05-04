@@ -70,8 +70,8 @@
 <footer>© 2025 <a href="../index.html">HS Gestión</a> — Todos los derechos reservados.</footer>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const db = getFirestore(initializeApp({apiKey:"AIzaSyDmMP5ZCfl9JfkQQf1xIfcGAei_BPLvKj8",authDomain:"hs-gestion-a102e.firebaseapp.com",projectId:"hs-gestion-a102e",storageBucket:"hs-gestion-a102e.firebasestorage.app",messagingSenderId:"40828198084",appId:"1:40828198084:web:70dd328e4e242925727d91"}));
 async function load() {
   const grid = document.getElementById('projectsGrid');

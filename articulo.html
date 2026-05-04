@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="pageTitle">Artículo | HS Gestión</title>
+  <meta name="description" id="pageDesc" content="HS Gestión - Blog" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+  <link rel="stylesheet" href="css/home.css?v=2.0.0" />
+  <style>
+    .article-hero { padding: 120px 0 60px; background: var(--bg2); border-bottom: 1px solid var(--border); }
+    .article-back { display:inline-flex; align-items:center; gap:8px; font-family:var(--mono); font-size:.72rem; color:var(--muted); text-decoration:none; letter-spacing:1px; margin-bottom:28px; transition:var(--ease); }
+    .article-back:hover { color:var(--green); }
+    .article-cat { display:inline-block; padding:3px 10px; background:var(--green); color:var(--bg); font-family:var(--mono); font-size:.62rem; letter-spacing:2px; border-radius:2px; margin-bottom:16px; }
+    .article-title { font-family:var(--head); font-size:clamp(1.8rem,4.5vw,3.2rem); font-weight:900; color:var(--text); line-height:1.1; margin-bottom:20px; }
+    .article-meta { display:flex; flex-wrap:wrap; gap:16px; font-family:var(--mono); font-size:.72rem; color:var(--muted); margin-bottom:24px; }
+    .article-cover { width:100%; max-height:480px; object-fit:cover; border-radius:6px; margin:32px 0; border:1px solid var(--border); }
+
+    .article-layout { display:grid; grid-template-columns:1fr 300px; gap:48px; padding:60px 0; }
+    @media(max-width:900px){ .article-layout { grid-template-columns:1fr; } }
+
+    /* CONTENT */
+    .article-content { font-family:'Lora', Georgia, serif; font-size:1.05rem; color:#b8d4e8; line-height:1.9; }
+    .article-content h1,.article-content h2,.article-content h3 { font-family:var(--head); color:var(--text); margin:32px 0 14px; line-height:1.2; }
+    .article-content h2 { font-size:1.5rem; color:var(--green); border-bottom:1px solid var(--border); padding-bottom:8px; }
+    .article-content h3 { font-size:1.15rem; color:var(--cyan); }
+    .article-content p { margin-bottom:20px; }
+    .article-content a { color:var(--green); text-decoration:underline; text-underline-offset:3px; }
+    .article-content img { max-width:100%; border-radius:4px; margin:16px 0; border:1px solid var(--border); }
+    .article-content blockquote { border-left:3px solid var(--green); padding:12px 20px; margin:24px 0; background:rgba(0,255,136,0.04); font-style:italic; color:var(--muted); border-radius:0 4px 4px 0; }
+    .article-content code { font-family:var(--mono); background:rgba(0,255,136,0.08); border:1px solid var(--border); padding:2px 6px; border-radius:3px; font-size:.85em; color:var(--green); }
+    .article-content pre { background:var(--bg3); border:1px solid var(--border); border-radius:4px; padding:16px; overflow-x:auto; margin:20px 0; }
+    .article-content pre code { background:none; border:none; padding:0; }
+    .article-content ul,.article-content ol { padding-left:24px; margin-bottom:20px; }
+    .article-content li { margin-bottom:6px; }
+
+    /* SIDEBAR */
+    .article-sidebar { display:flex; flex-direction:column; gap:24px; }
+    .sidebar-widget { background:var(--card-bg); border:1px solid var(--border); border-radius:5px; padding:20px; }
+    .sidebar-title { font-family:var(--head); font-size:.75rem; font-weight:700; color:var(--green); letter-spacing:2px; text-transform:uppercase; margin-bottom:14px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+    .related-card { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); text-decoration:none; color:inherit; transition:var(--ease); }
+    .related-card:last-child { border-bottom:none; }
+    .related-card:hover .related-title { color:var(--green); }
+    .related-thumb { width:60px; height:60px; border-radius:3px; object-fit:cover; background:var(--bg3); flex-shrink:0; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:1.2rem; overflow:hidden; }
+    .related-thumb img { width:100%; height:100%; object-fit:cover; }
+    .related-title { font-family:var(--head); font-size:.78rem; font-weight:700; color:var(--text); line-height:1.3; margin-bottom:4px; transition:color .2s; }
+    .related-date { font-family:var(--mono); font-size:.62rem; color:var(--muted); }
+
+    .share-buttons { display:flex; gap:10px; flex-wrap:wrap; }
+    .share-btn { flex:1; min-width:80px; padding:8px 12px; border:1px solid var(--border); border-radius:3px; background:transparent; color:var(--text); font-family:var(--mono); font-size:.68rem; letter-spacing:1px; cursor:pointer; transition:var(--ease); text-align:center; text-decoration:none; display:block; }
+    .share-btn:hover { border-color:var(--green); color:var(--green); background:rgba(0,255,136,0.05); }
+
+    .toc { list-style:none; display:flex; flex-direction:column; gap:6px; }
+    .toc a { font-family:var(--mono); font-size:.75rem; color:var(--muted); text-decoration:none; transition:var(--ease); display:block; padding:4px 0; border-left:2px solid transparent; padding-left:10px; }
+    .toc a:hover,.toc a.active { color:var(--green); border-left-color:var(--green); }
+
+    .article-not-found { text-align:center; padding:120px 20px; }
+    .article-not-found h2 { font-family:var(--head); font-size:2rem; color:var(--text); margin-bottom:16px; }
+    .article-not-found p { color:var(--muted); font-family:var(--mono); margin-bottom:28px; }
+
+    /* PROGRESS BAR */
+    #readProgress { position:fixed; top:64px; left:0; height:2px; background:linear-gradient(90deg,var(--green),var(--cyan)); z-index:990; transition:width .1s; width:0; }
+  </style>
+</head>
+<body>
+
+<div id="pageLoader"><div class="loader-text">// CARGANDO ARTÍCULO...</div><div class="loader-bar"><div class="loader-fill"></div></div></div>
+<div id="cursor"></div>
+<div id="cursor-trail"></div>
+<div id="readProgress"></div>
+
+<header id="header">
+  <div class="container">
+    <nav class="nav-inner">
+      <a href="index.html" class="logo">
+        <img src="images/logo.png" alt="HS Gestión" onerror="this.style.display='none'" />
+        <span class="logo-text">HS_GESTIÓN</span>
+      </a>
+      <ul id="dynMenu"></ul>
+      <div class="nav-right">
+        <button class="btn-login" id="loginTrigger"><span class="dot"></span>ACCEDER</button>
+        <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<div id="loginPanel">
+  <div class="login-header"><span class="login-title">// AUTENTICACIÓN</span><button class="login-close" id="loginClose">✕</button></div>
+  <div class="login-field"><label>EMAIL</label><input type="email" id="loginEmail" placeholder="usuario@dominio.com" autocomplete="email" /></div>
+  <div class="login-field"><label>CONTRASEÑA</label><input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" /></div>
+  <button class="btn-login-submit" id="loginSubmitBtn">INICIAR_SESIÓN()</button>
+  <div id="loginError"></div>
+</div>
+
+<!-- ARTICLE HERO -->
+<div class="article-hero" id="articleHero" style="display:none">
+  <div class="container">
+    <a href="index.html#blog" class="article-back">← VOLVER AL BLOG</a>
+    <span class="article-cat" id="artCat" style="display:none"></span>
+    <h1 class="article-title" id="artTitle"></h1>
+    <div class="article-meta">
+      <span id="artDate"></span>
+      <span id="artAuthor"></span>
+      <span id="artReadTime"></span>
+    </div>
+  </div>
+</div>
+
+<!-- NOT FOUND -->
+<div class="article-not-found" id="notFound" style="display:none">
+  <h2>Artículo no encontrado</h2>
+  <p>El artículo que buscás no existe o fue eliminado.</p>
+  <a href="index.html#blog" class="btn-primary" style="display:inline-flex">← VOLVER AL BLOG</a>
+</div>
+
+<!-- ARTICLE BODY -->
+<div class="container" id="articleBody" style="display:none">
+  <img id="artCover" class="article-cover" style="display:none" alt="Portada" />
+  <div class="article-layout">
+    <div>
+      <div class="article-content" id="artContent"></div>
+    </div>
+    <aside class="article-sidebar">
+      <div class="sidebar-widget">
+        <div class="sidebar-title">COMPARTIR</div>
+        <div class="share-buttons">
+          <a id="shareWA" class="share-btn" target="_blank" rel="noopener">💬 WhatsApp</a>
+          <a id="shareX" class="share-btn" target="_blank" rel="noopener">✖ Twitter/X</a>
+          <button class="share-btn" id="copyLink">🔗 Copiar link</button>
+        </div>
+      </div>
+      <div class="sidebar-widget" id="tocWidget" style="display:none">
+        <div class="sidebar-title">CONTENIDO</div>
+        <ul class="toc" id="tocList"></ul>
+      </div>
+      <div class="sidebar-widget" id="relatedWidget" style="display:none">
+        <div class="sidebar-title">TAMBIÉN TE PUEDE INTERESAR</div>
+        <div id="relatedList"></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    <div class="footer-bottom" style="padding-top:28px;border-top:1px solid var(--border)">
+      <p>© 2025 <a href="index.html">HS Gestión</a> · Todos los derechos reservados.</p>
+      <a href="index.html#blog" class="btn-outline" style="font-size:.72rem;padding:6px 14px">← BLOG</a>
+    </div>
+  </div>
+</footer>
+
+<a href="https://wa.me/5513981763452?text=Hola%20HS%20Gestión!" class="wa-float" target="_blank" rel="noopener">
+  <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+</a>
+
+<script type="module" src="js/articulo.js?v=2.0.0"></script>
+</body>
+</html>

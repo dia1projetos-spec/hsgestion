@@ -1,890 +1,604 @@
-// HS Gestión Admin – admin.js v2.0.0
-import { initializeApp }          from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-import {
-  getFirestore, collection, doc, setDoc, getDocs,
-  deleteDoc, query, orderBy, serverTimestamp, updateDoc, where
-} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+// HS Gestión – Admin JS v2.0.0
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, getDocs, addDoc, setDoc, doc, deleteDoc, updateDoc, query, orderBy, limit, getDoc, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-// ── CONFIG ────────────────────────────────────────────────────────────────────
 const firebaseConfig = {
-  apiKey:            "AIzaSyDmMP5ZCfl9JfkQQf1xIfcGAei_BPLvKj8",
-  authDomain:        "hs-gestion-a102e.firebaseapp.com",
-  projectId:         "hs-gestion-a102e",
-  storageBucket:     "hs-gestion-a102e.firebasestorage.app",
-  messagingSenderId: "40828198084",
-  appId:             "1:40828198084:web:70dd328e4e242925727d91"
+  apiKey:"AIzaSyDmMP5ZCfl9JfkQQf1xIfcGAei_BPLvKj8",authDomain:"hs-gestion-a102e.firebaseapp.com",
+  projectId:"hs-gestion-a102e",storageBucket:"hs-gestion-a102e.firebasestorage.app",
+  messagingSenderId:"40828198084",appId:"1:40828198084:web:70dd328e4e242925727d91"
 };
 const ADMIN_EMAIL = "riconetson@gmail.com";
 
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
+const app     = initializeApp(firebaseConfig);
+const auth    = getAuth(app);
+const db      = getFirestore(app);
+const storage = getStorage(app);
 
-// ── STATE ─────────────────────────────────────────────────────────────────────
-let allUsers = [], allMessages = [], allPacks = [];
-let confirmCb = null, editingId = null;
-
-// ── HELPERS ───────────────────────────────────────────────────────────────────
-const get  = id  => document.getElementById(id);
-const qs   = sel => document.querySelector(sel);
-const qsa  = sel => [...document.querySelectorAll(sel)];
-const slugify = s => s.toLowerCase().normalize('NFD')
-  .replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'-')
-  .replace(/-+/g,'-').replace(/^-|-$/g,'');
-const fmtDate = ts => ts?.toDate
-  ? ts.toDate().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
-const fmtMoney = v => v ? `$${parseFloat(v).toLocaleString('es-AR')}` : '—';
-
-function toast(msg, type='info') {
-  const t = document.createElement('div');
-  t.className = `toast ${type}`;
-  t.innerHTML = `<span>${type==='success'?'✅':type==='error'?'❌':'ℹ️'}</span> ${msg}`;
-  document.body.appendChild(t);
-  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
-  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 350); }, 3500);
+// ── UTILS ──────────────────────────────────────────────────────────────────
+function toast(msg, type='success') {
+  const t = document.getElementById('toast');
+  const el = document.createElement('div');
+  el.className = `toast-item toast-${type}`;
+  el.textContent = (type==='success'?'✓ ':'✗ ') + msg;
+  t.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
 }
 
-function openModal(id)  { get(id).classList.add('open'); }
-function closeModal(id) { get(id).classList.remove('open'); }
-function closeAll()     { qsa('.modal-bg').forEach(m => m.classList.remove('open')); }
-
-function confirm(msg, cb) {
-  get('confirmTxt').textContent = msg;
-  confirmCb = cb;
-  openModal('mConfirm');
+function fmtDate(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
 }
 
-// ── AUTH ──────────────────────────────────────────────────────────────────────
-onAuthStateChanged(auth, async user => {
-  if (user && user.email === ADMIN_EMAIL) {
-    get('loginScreen').style.display = 'none';
-    get('adminApp').style.display    = 'block';
-    get('adminEmail').textContent    = user.email;
-    await loadAll();
-    startAdminClock();
-    initAdminAgenda();
-    loadClientMessages();
-    goTo('dashboard');
-  } else if (user) {
-    await signOut(auth);
-    window.location.href = '../index.html';
-  } else {
-    window.location.href = '../index.html';
-  }
+function confirmDel(msg) { return confirm('¿Eliminar? ' + msg); }
+
+window.closeModal = (id) => document.getElementById(id).classList.remove('open');
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target === m) m.classList.remove('open'); });
 });
 
-get('logoutBtn').addEventListener('click', () =>
-  signOut(auth).then(() => window.location.href = '../index.html')
-);
+// ── TOPBAR CLOCK ───────────────────────────────────────────────────────────
+setInterval(() => {
+  const el = document.getElementById('topbarTime');
+  if(el) el.textContent = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}, 1000);
 
-// ── NAVEGAÇÃO ─────────────────────────────────────────────────────────────────
-const PAGE_TITLES = {
-  dashboard: 'Dashboard',
-  usuarios:  'Usuarios',
-  mensajes:  'Mensajes',
-  packs:     'Packs de Contenido'
-};
-
-function goTo(pg) {
-  qsa('.page').forEach(p => p.classList.remove('active'));
-  qsa('.sb-item[data-pg]').forEach(b => b.classList.remove('active'));
-  get(`pg-${pg}`)?.classList.add('active');
-  qs(`.sb-item[data-pg="${pg}"]`)?.classList.add('active');
-  get('topbarTitle').textContent = PAGE_TITLES[pg] || pg;
-  get('sidebar').classList.remove('open');
-  get('sbOverlay').classList.remove('show');
-}
-
-qsa('.sb-item[data-pg]').forEach(b =>
-  b.addEventListener('click', () => goTo(b.dataset.pg))
-);
-
-// Mobile sidebar
-get('menuToggle').addEventListener('click', () => {
-  get('sidebar').classList.toggle('open');
-  get('sbOverlay').classList.toggle('show');
-});
-get('sbOverlay').addEventListener('click', () => {
-  get('sidebar').classList.remove('open');
-  get('sbOverlay').classList.remove('show');
+// ── AUTH GUARD ─────────────────────────────────────────────────────────────
+onAuthStateChanged(auth, user => {
+  if (!user || user.email !== ADMIN_EMAIL) { window.location.href='../index.html'; return; }
+  document.getElementById('adminEmail').textContent = user.email;
+  loadDashboard();
 });
 
-// Dashboard quick actions
-get('dBtnUser').addEventListener('click',  () => { goTo('usuarios'); get('btnNewUser').click(); });
-get('dBtnMsg').addEventListener('click',   () => { goTo('mensajes'); get('btnNewMsg').click(); });
-get('dBtnPacks').addEventListener('click', () => goTo('packs'));
-get('btnRefresh').addEventListener('click', loadAll);
-
-// ── LOAD ALL ──────────────────────────────────────────────────────────────────
-async function loadAll() {
-  await Promise.all([loadUsers(), loadMessages(), loadPacks(), loadProjects()]);
-  updateStats();
-}
-
-// ── RELÓGIO ADMIN ────────────────────────────────────────────────────────────────
-function startAdminClock() {
-  const DIAS  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  function tick() {
-    const now = new Date();
-    const h = String(now.getHours()).padStart(2,'0');
-    const m = String(now.getMinutes()).padStart(2,'0');
-    const s = String(now.getSeconds()).padStart(2,'0');
-    const cl = get('adminClock'), dt = get('adminDate');
-    if(cl) cl.textContent = `${h}:${m}:${s}`;
-    if(dt) dt.textContent = `${DIAS[now.getDay()]}, ${now.getDate()} ${MESES[now.getMonth()]} ${now.getFullYear()}`;
-  }
-  tick();
-  setInterval(tick, 1000);
-}
-
-// ── AGENDA ADMIN ──────────────────────────────────────────────────────────────
-function initAdminAgenda() {
-  const MONTHS_ES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
-  const DAYS_ES   = ['D','L','M','M','J','V','S'];
-  const KEY = 'hs_admin_agenda';
-  let events = JSON.parse(localStorage.getItem(KEY)||'{}');
-  let vy = new Date().getFullYear(), vm = new Date().getMonth(), sel = null;
-
-  function save() { localStorage.setItem(KEY, JSON.stringify(events)); }
-
-  function renderCal() {
-    const gEl = get('adAgGrid'), mEl = get('adAgMonth');
-    if(!gEl||!mEl) return;
-    mEl.textContent = `${MONTHS_ES[vm]} ${vy}`;
-    const first = new Date(vy,vm,1).getDay();
-    const total = new Date(vy,vm+1,0).getDate();
-    const today = new Date();
-    let html = DAYS_ES.map(d=>`<div style="text-align:center;font-size:.55rem;color:#484f58;padding:2px 0;font-family:monospace;">${d}</div>`).join('');
-    for(let i=0;i<first;i++) html+=`<div></div>`;
-    for(let d=1;d<=total;d++){
-      const key=`${vy}-${String(vm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const isT = d===today.getDate()&&vm===today.getMonth()&&vy===today.getFullYear();
-      const hasE = events[key]?.length>0;
-      const isSel = key===sel;
-      html+=`<div onclick="adSelDay('${key}')" style="
-        aspect-ratio:1;display:flex;align-items:center;justify-content:center;
-        border-radius:4px;font-size:.65rem;cursor:pointer;
-        color:${isT?'#1f6feb':isSel?'#d29922':'#8b949e'};
-        background:${isSel?'rgba(210,153,34,.1)':'transparent'};
-        border:1px solid ${isT?'#1f6feb':'transparent'};
-        position:relative;
-      ">${d}${hasE?`<span style="position:absolute;bottom:2px;width:3px;height:3px;border-radius:50%;background:#d29922;"></span>`:''}</div>`;
-    }
-    gEl.innerHTML = html;
-    renderEvs();
-  }
-
-  function renderEvs() {
-    const el = get('adAgEvents');
-    if(!el) return;
-    if(!sel){el.innerHTML='<p style="font-size:.68rem;color:#484f58;">Seleccioná un día</p>';return;}
-    const evs = events[sel]||[];
-    el.innerHTML = evs.length
-      ? evs.map((ev,i)=>`<div style="display:flex;align-items:center;gap:6px;padding:3px 6px;background:rgba(210,153,34,.08);border-radius:4px;margin-bottom:3px;">
-          <span style="flex:1;font-size:.72rem;color:#c9d1d9;">${ev}</span>
-          <button onclick="adDelEv('${sel}',${i})" style="background:none;border:none;color:#484f58;cursor:pointer;font-size:.75rem;">✕</button>
-        </div>`).join('')
-      : `<p style="font-size:.68rem;color:#484f58;">Sin eventos el ${sel}</p>`;
-  }
-
-  window.adSelDay = key => { sel=key; renderCal(); };
-  window.adDelEv  = (key,i) => {
-    events[key].splice(i,1);
-    if(!events[key].length) delete events[key];
-    save(); renderCal();
-  };
-
-  get('adAgPrev')?.addEventListener('click',()=>{ if(vm===0){vm=11;vy--;}else vm--; renderCal(); });
-  get('adAgNext')?.addEventListener('click',()=>{ if(vm===11){vm=0;vy++;}else vm++; renderCal(); });
-  get('adAgAdd')?.addEventListener('click',()=>{
-    const txt=get('adAgInput')?.value.trim();
-    if(!txt)return;
-    if(!sel){alert('Seleccioná un día primero');return;}
-    if(!events[sel])events[sel]=[];
-    events[sel].push(txt);
-    save();
-    if(get('adAgInput'))get('adAgInput').value='';
-    renderCal();
-  });
-  get('adAgInput')?.addEventListener('keydown',e=>{if(e.key==='Enter')get('adAgAdd')?.click();});
-  renderCal();
-}
-
-// ── STATS ─────────────────────────────────────────────────────────────────────
-function updateStats() {
-  const paid = allUsers.filter(u => u.paymentStatus === 'paid').length;
-  get('stUsers').textContent = allUsers.length;
-  get('stPaid').textContent  = paid;
-  get('stOpen').textContent  = allUsers.length - paid;
-  get('stPacks').textContent = allPacks.length;
-  get('userPill').textContent = allUsers.length;
-
-  // Dashboard recentes
-  const el = get('dashRecent');
-  if (!allUsers.length) {
-    el.innerHTML = `<p style="color:#484f58;font-size:.83rem;">Sin usuarios aún</p>`;
-    return;
-  }
-  el.innerHTML = allUsers.slice(0,5).map(u => `
-    <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid #21262d;">
-      <div class="u-ava" style="width:28px;height:28px;font-size:.75rem;">
-        ${u.logoFile
-          ? `<img src="../../images/usuarios/${u.logoFile}" onerror="this.style.display='none'" />`
-          : u.name.charAt(0).toUpperCase()}
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:.83rem;font-weight:600;color:#f0f6fc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${u.name}</div>
-        <div style="font-size:.7rem;color:#484f58;">${u.service || 'Sin servicio'}</div>
-      </div>
-      <span class="badge ${u.paymentStatus==='paid'?'badge-green':'badge-red'}" style="font-size:.68rem;">
-        ${u.paymentStatus==='paid'?'Pagado':'Pendiente'}
-      </span>
-    </div>`).join('');
-}
-
-// ── USUARIOS ──────────────────────────────────────────────────────────────────
-async function loadUsers() {
-  try {
-    const snap = await getDocs(query(collection(db,'users'), orderBy('createdAt','desc')));
-    allUsers = snap.docs.map(d => ({id:d.id,...d.data()}));
-  } catch {
-    const snap = await getDocs(collection(db,'users'));
-    allUsers = snap.docs.map(d => ({id:d.id,...d.data()}));
-  }
-  renderUsers();
-  fillSelects();
-}
-
-function renderUsers() {
-  const tbody = get('usersBody');
-  if (!allUsers.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><span class="empty-ic">👥</span><p>Sin usuarios. Hacé clic en "Crear Usuario".</p></div></td></tr>`;
-    return;
-  }
-  tbody.innerHTML = allUsers.map(u => `
-    <tr>
-      <td>
-        <div class="u-cell">
-          <div class="u-ava">
-            ${u.logoFile
-              ? `<img src="../../images/usuarios/${u.logoFile}" onerror="this.style.display='none'" />`
-              : u.name.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <div class="u-name">${u.name}</div>
-            <div class="u-email">${u.email}</div>
-          </div>
-        </div>
-      </td>
-      <td>${u.service || '—'}</td>
-      <td>${fmtMoney(u.serviceValue)}</td>
-      <td><span class="badge ${u.paymentStatus==='paid'?'badge-green':'badge-red'}">${u.paymentStatus==='paid'?'✓ Pagado':'⏳ Pendiente'}</span></td>
-      <td><span class="badge badge-blue">${fmtDate(u.createdAt)}</span></td>
-      <td><a href="../usuarios/index.html" target="_blank" class="pg-link">🔗 Ver</a></td>
-      <td>
-        <div class="act-row">
-          <button class="btn btn-gray btn-ico btn-sm" onclick="editUser('${u.id}')" title="Editar">✏️</button>
-          <button class="btn btn-gray btn-ico btn-sm" onclick="togglePay('${u.id}','${u.paymentStatus}')" title="Cambiar pago">💳</button>
-          <button class="btn-x" onclick="askDeleteUser('${u.id}','${u.name.replace(/'/g,"\\'")}')">✕</button>
-        </div>
-      </td>
-    </tr>`).join('');
-}
-
-function fillSelects() {
-  const optsAll = `<option value="">📢 Todos los usuarios</option>` +
-    allUsers.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
-  const optsNone = `<option value="">— Todos / Elegir después —</option>` +
-    allUsers.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
-  if(get('msgTo'))  get('msgTo').innerHTML  = optsAll;
-  if(get('packTo')) get('packTo').innerHTML = optsNone;
-}
-
-// Criar/Editar
-get('btnNewUser').addEventListener('click', () => {
-  editingId = null;
-  get('mUserTitle').textContent = 'Crear Usuario';
-  get('userForm').reset();
-  get('logoPreview').style.display = 'none';
-  get('fbTip').style.display = 'none';
-  openModal('mUser');
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await signOut(auth); window.location.href = '../index.html';
 });
 
-get('uLogo').addEventListener('input', e => {
-  const v = e.target.value.trim();
-  const img = get('logoPreview');
-  if (v) { img.src = `../../images/usuarios/${v}`; img.style.display = 'block'; img.onerror = () => img.style.display='none'; }
-  else     { img.style.display = 'none'; }
+// ── NAVIGATION ─────────────────────────────────────────────────────────────
+const titles = { dashboard:'DASHBOARD', posts:'ARTÍCULOS', newpost:'NUEVO ARTÍCULO', slides:'SLIDES', menu:'MENÚ', users:'USUARIOS', contacts:'CONSULTAS' };
+
+window.navTo = function(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+page)?.classList.add('active');
+  document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
+  document.getElementById('topbarTitle').textContent = titles[page] || page.toUpperCase();
+  document.getElementById('sidebar').classList.remove('open');
+  // Load data
+  if(page==='dashboard')  loadDashboard();
+  if(page==='posts')      loadPosts();
+  if(page==='slides')     loadSlides();
+  if(page==='menu')       loadMenu();
+  if(page==='users')      loadUsers();
+  if(page==='contacts')   loadContacts();
+  if(page==='newpost')    initNewPost();
+}
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => navTo(item.dataset.page));
 });
 
-window.editUser = uid => {
-  const u = allUsers.find(x => x.id===uid);
-  if (!u) return;
-  editingId = uid;
-  get('mUserTitle').textContent = 'Editar Usuario';
-  get('uName').value    = u.name    || '';
-  get('uEmail').value   = u.email   || '';
-  get('uPassword').value= '';
-  get('uService').value = u.service || '';
-  get('uValue').value   = u.serviceValue || '';
-  get('uLogo').value    = u.logoFile || '';
-  qsa('input[name=pay]').forEach(r => r.checked = r.value === u.paymentStatus);
-  const img = get('logoPreview');
-  if (u.logoFile) { img.src = `../../images/usuarios/${u.logoFile}`; img.style.display='block'; }
-  else img.style.display = 'none';
-  get('fbTip').style.display = 'none';
-  openModal('mUser');
-};
-
-get('userForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const btn  = get('saveUserBtn');
-  btn.textContent = 'Guardando...'; btn.disabled = true;
-
-  const name      = get('uName').value.trim();
-  const email     = get('uEmail').value.trim();
-  const password  = get('uPassword').value.trim();
-  const service   = get('uService').value.trim();
-  const value     = get('uValue').value.trim();
-  const logoFile  = get('uLogo').value.trim();
-  const payStatus = qs('input[name=pay]:checked')?.value || 'open';
-  const slug      = slugify(name) || `u${Date.now()}`;
-
-  try {
-    if (!editingId) {
-      await setDoc(doc(db,'users',`u_${Date.now()}`), {
-        name, email, password, service, serviceValue:value,
-        paymentStatus:payStatus, logoFile, slug, createdAt:serverTimestamp()
-      });
-      get('fbTip').style.display = 'block';
-      toast(`✅ Usuario "${name}" creado!`, 'success');
-    } else {
-      await updateDoc(doc(db,'users',editingId), {
-        name, service, serviceValue:value, paymentStatus:payStatus, logoFile, slug
-      });
-      toast('✅ Usuario actualizado', 'success');
-      closeModal('mUser');
-    }
-    await loadUsers(); updateStats();
-  } catch(err) {
-    toast('Error: '+err.message, 'error');
-  } finally {
-    btn.textContent = '💾 Guardar'; btn.disabled = false;
-  }
+// Sidebar mobile
+document.getElementById('sidebarToggle').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
 });
 
-window.togglePay = async (uid, cur) => {
-  const next = cur==='paid' ? 'open' : 'paid';
-  await updateDoc(doc(db,'users',uid), {paymentStatus:next});
-  toast(next==='paid' ? '✅ Marcado Pagado' : '⏳ Marcado Pendiente', 'success');
-  await loadUsers(); updateStats();
-};
+// ── QUILL EDITOR ───────────────────────────────────────────────────────────
+let quill = null;
+function initNewPost(editData = null) {
+  document.getElementById('postFormTitle').textContent = editData ? 'EDITAR ARTÍCULO' : 'NUEVO ARTÍCULO';
+  document.getElementById('editPostId').value = editData?.id || '';
+  document.getElementById('pTitle').value = editData?.title || '';
+  document.getElementById('pCategory').value = editData?.category || '';
+  document.getElementById('pStatus').value = editData?.status || 'draft';
+  document.getElementById('pAuthor').value = editData?.author || '';
+  document.getElementById('pExcerpt').value = editData?.excerpt || '';
+  document.getElementById('pCoverImage').value = editData?.coverImage || '';
+  renderCoverPreview(editData?.coverImage || null);
 
-window.askDeleteUser = (uid, name) =>
-  confirm(`¿Eliminar a "${name}"? Se borran sus datos, mensajes y packs.`, () => deleteUser(uid));
-
-async function deleteUser(uid) {
-  try {
-    await deleteDoc(doc(db,'users',uid));
-    const s1 = await getDocs(query(collection(db,'messages'), where('userId','==',uid)));
-    for (const d of s1.docs) await deleteDoc(d.ref);
-    const s2 = await getDocs(query(collection(db,'packAssignments'), where('userId','==',uid)));
-    for (const d of s2.docs) await deleteDoc(d.ref);
-    toast('🗑️ Usuario eliminado', 'success');
-    await loadAll();
-  } catch(err) { toast('Error: '+err.message, 'error'); }
-}
-
-// ── MENSAJES ──────────────────────────────────────────────────────────────────
-async function loadMessages() {
-  try {
-    const snap = await getDocs(query(collection(db,'messages'), orderBy('createdAt','desc')));
-    allMessages = snap.docs.map(d=>({id:d.id,...d.data()}));
-  } catch {
-    const snap = await getDocs(collection(db,'messages'));
-    allMessages = snap.docs.map(d=>({id:d.id,...d.data()}));
-  }
-  renderMessages();
-}
-
-function renderMessages() {
-  const el = get('msgListAdmin');
-  if(!el){const el2=get('msgList');if(el2&&allMessages.length)el2.innerHTML=allMessages.map(m=>`<div class='msg-card'><p class='msg-txt'>${m.text}</p></div>`).join('');return;}
-  if (!allMessages.length) {
-    el.innerHTML = `<div class="empty"><span class="empty-ic">💬</span><p>Sin mensajes aún</p></div>`;
-    return;
-  }
-  el.innerHTML = allMessages.map(m => {
-    const u = allUsers.find(x => x.id===m.userId);
-    return `
-      <div class="msg-card">
-        <div class="msg-top">
-          <span class="msg-to">→ ${m.userId==='all'?'📢 Todos':u?.name||m.userId}</span>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span class="msg-date">${fmtDate(m.createdAt)}</span>
-            <button class="btn-x" onclick="askDeleteMsg('${m.id}')">✕</button>
-          </div>
-        </div>
-        <p class="msg-txt">${m.text}</p>
-      </div>`;
-  }).join('');
-}
-
-get('btnNewMsg').addEventListener('click', () => { get('msgForm').reset(); openModal('mMsg'); });
-
-get('msgForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const btn = get('saveMsgBtn');
-  btn.textContent = 'Enviando...'; btn.disabled = true;
-  try {
-    await setDoc(doc(collection(db,'messages')), {
-      userId: get('msgTo').value || 'all',
-      text:   get('msgTxt').value.trim(),
-      createdAt: serverTimestamp()
+  if (!quill) {
+    quill = new Quill('#quillEditor', {
+      theme: 'snow',
+      placeholder: 'Escribí el contenido del artículo...',
+      modules: {
+        toolbar: [
+          [{ header: [1,2,3,false] }],
+          ['bold','italic','underline','strike'],
+          ['link','blockquote','code-block'],
+          [{ list:'ordered' },{ list:'bullet' }],
+          ['image'],
+          ['clean']
+        ]
+      }
     });
-    toast('📨 Mensaje enviado', 'success');
-    closeModal('mMsg');
-    await loadMessages();
-  } catch(err) { toast('Error: '+err.message, 'error'); }
-  finally { btn.textContent = '📨 Enviar'; btn.disabled = false; }
-});
-
-window.askDeleteMsg = mid =>
-  confirm('¿Eliminar este mensaje?', () => deleteMsg(mid));
-
-async function deleteMsg(mid) {
-  await deleteDoc(doc(db,'messages',mid));
-  toast('🗑️ Mensaje eliminado', 'success');
-  await loadMessages();
+    // Image handler
+    quill.getModule('toolbar').addHandler('image', () => {
+      const inp = document.createElement('input'); inp.type='file'; inp.accept='image/*';
+      inp.onchange = async () => {
+        const file = inp.files[0]; if(!file) return;
+        toast('Subiendo imagen...');
+        const url = await uploadFile(file, 'post-images/'+Date.now()+'-'+file.name);
+        if(url) { const range = quill.getSelection(true); quill.insertEmbed(range.index,'image',url,'user'); }
+      };
+      inp.click();
+    });
+  } else {
+    quill.setContents([]);
+  }
+  if(editData?.content) quill.clipboard.dangerouslyPasteHTML(editData.content);
 }
 
-// ── PACKS (Cloudinary) ───────────────────────────────────────────────────────────
-
-// Credenciais Cloudinary
-const CLOUD_NAME   = "dc0bxgeea";
-const UPLOAD_PRESET = "hs_gestion_packs"; // unsigned preset — criar no Cloudinary Dashboard
-
-async function uploadToCloudinary(file, onProgress) {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', UPLOAD_PRESET);
-  formData.append('folder', 'hs-gestion/packs');
-
+// ── UPLOAD HELPER ─────────────────────────────────────────────────────────
+function uploadFile(file, path, progressBarId = null) {
   return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`);
-    xhr.upload.onprogress = e => {
-      if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100));
-    };
-    xhr.onload = () => {
-      const res = JSON.parse(xhr.responseText);
-      if (xhr.status === 200) resolve(res);
-      else reject(new Error(res.error?.message || 'Upload falhou'));
-    };
-    xhr.onerror = () => reject(new Error('Erro de rede'));
-    xhr.send(formData);
+    const storageRef = ref(storage, path);
+    const task = uploadBytesResumable(storageRef, file);
+    if(progressBarId) {
+      const wrap = document.getElementById(progressBarId+'Wrap')||document.getElementById(progressBarId)?.parentElement;
+      if(wrap) wrap.style.display='block';
+    }
+    task.on('state_changed',
+      snap => {
+        const pct = (snap.bytesTransferred/snap.totalBytes)*100;
+        const bar = document.getElementById(progressBarId);
+        if(bar) bar.style.width = pct+'%';
+      },
+      err => { toast('Error al subir imagen','error'); reject(err); },
+      async () => { const url = await getDownloadURL(task.snapshot.ref); resolve(url); }
+    );
   });
 }
 
-async function loadPacks() {
-  try {
-    const snap = await getDocs(query(collection(db,'packs'), orderBy('createdAt','desc')));
-    allPacks = snap.docs.map(d=>({id:d.id,...d.data()}));
-  } catch {
-    const snap = await getDocs(collection(db,'packs'));
-    allPacks = snap.docs.map(d=>({id:d.id,...d.data()}));
-  }
-  renderPacks();
+function setupUploadZone(zoneId, progressId, hiddenId, previewId) {
+  const zone = document.getElementById(zoneId);
+  const hidden = document.getElementById(hiddenId);
+  if(!zone) return;
+  zone.addEventListener('click', () => {
+    const inp = document.createElement('input'); inp.type='file'; inp.accept='image/*';
+    inp.onchange = async () => handleFileUpload(inp.files[0], progressId, hiddenId, previewId);
+    inp.click();
+  });
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag');
+    handleFileUpload(e.dataTransfer.files[0], progressId, hiddenId, previewId);
+  });
 }
 
-function renderPacks() {
-  const el = get('packsGrid');
-  if (!allPacks.length) {
-    el.innerHTML = `<div class="empty" style="grid-column:1/-1"><span class="empty-ic">📦</span><p>Sin packs aún. Hacé clic en "Nuevo Pack".</p></div>`;
-    return;
-  }
-  el.innerHTML = allPacks.map(p => {
-    const assignedNames = (p.assignedTo || [])
-      .map(uid => allUsers.find(u=>u.id===uid)?.name || uid)
-      .join(', ') || 'Sin asignar';
-    const thumb = p.files?.[0];
-    const isVideo = thumb?.resource_type === 'video';
-    return `
-      <div class="pack-card">
-        <div class="pack-thumb">
-          ${thumb
-            ? isVideo
-              ? `<video src="${thumb.url}" muted style="width:100%;height:100%;object-fit:cover;"></video>`
-              : `<img src="${thumb.url}" style="width:100%;height:100%;object-fit:cover;" />`
-            : '📦'}
-          <div style="position:absolute;top:7px;left:7px;">
-            <span class="badge ${isVideo?'badge-blue':'badge-green'}" style="font-size:.65rem;">
-              ${isVideo?'🎬 Video':'🖼️ Imagen'}
-            </span>
-          </div>
-          <div style="position:absolute;top:7px;right:7px;background:rgba(0,0,0,.6);color:#fff;border-radius:20px;padding:2px 7px;font-size:.68rem;font-weight:700;">
-            ${p.files?.length || 0} archivo${p.files?.length!==1?'s':''}
-          </div>
-        </div>
-        <div class="pack-body">
-          <div class="pack-name">${p.title}</div>
-          <div class="pack-desc">${p.description || ''}</div>
-          <div class="pack-ft">
-            <span class="pack-who">👤 ${assignedNames}</span>
-            <div style="display:flex;gap:5px;">
-              <button class="btn btn-blue btn-sm" onclick="openAssignModal('${p.id}')">Asignar</button>
-              <button class="btn-x" onclick="askDeletePack('${p.id}','${p.title.replace(/'/g,"\'")}')">✕</button>
+async function handleFileUpload(file, progressId, hiddenId, previewId) {
+  if(!file || file.size > 3*1024*1024) { toast('Archivo muy grande (máx 3MB)','error'); return; }
+  const prog = document.getElementById(progressId);
+  if(prog) { prog.style.display='block'; }
+  const bar = document.getElementById(progressId+'Bar');
+  const path = 'uploads/'+Date.now()+'-'+file.name;
+  try {
+    const url = await uploadFile(file, path, progressId);
+    document.getElementById(hiddenId).value = url;
+    if(previewId === 'coverPreview') renderCoverPreview(url);
+    if(previewId === 'slideImgPreview') renderSlidePreview(url);
+    if(prog) setTimeout(()=>prog.style.display='none', 500);
+    toast('Imagen subida correctamente');
+  } catch(e) { toast('Error al subir','error'); }
+}
+
+function renderCoverPreview(url) {
+  const el = document.getElementById('coverPreview'); if(!el) return;
+  el.innerHTML = url ? `<div class="img-thumb"><img src="${url}" /><button class="del" onclick="clearCover()">✕</button></div>` : '';
+}
+window.clearCover = () => { document.getElementById('pCoverImage').value=''; renderCoverPreview(null); };
+
+function renderSlidePreview(url) {
+  const el = document.getElementById('slideImgPreview'); if(!el) return;
+  el.innerHTML = url ? `<div class="img-thumb"><img src="${url}" /><button class="del" onclick="clearSlideImg()">✕</button></div>` : '';
+}
+window.clearSlideImg = () => { document.getElementById('sImageUrl').value=''; renderSlidePreview(null); };
+
+setupUploadZone('coverUploadZone','coverProgress','pCoverImage','coverPreview');
+setupUploadZone('slideUploadZone','slideProgress','sImageUrl','slideImgPreview');
+
+// ── SAVE POST ─────────────────────────────────────────────────────────────
+async function savePost(status) {
+  const title = document.getElementById('pTitle').value.trim();
+  if(!title) { toast('El título es obligatorio','error'); return; }
+  const content = quill ? quill.root.innerHTML : '';
+  const editId = document.getElementById('editPostId').value;
+  const data = {
+    title,
+    content,
+    excerpt:      document.getElementById('pExcerpt').value.trim(),
+    category:     document.getElementById('pCategory').value,
+    author:       document.getElementById('pAuthor').value.trim(),
+    status,
+    coverImage:   document.getElementById('pCoverImage').value || '',
+    updatedAt:    serverTimestamp()
+  };
+  try {
+    if(editId) {
+      await updateDoc(doc(db,'posts',editId), data);
+      toast('Artículo actualizado');
+    } else {
+      data.createdAt = serverTimestamp();
+      await addDoc(collection(db,'posts'), data);
+      toast('Artículo guardado');
+    }
+    navTo('posts');
+  } catch(e) { console.error(e); toast('Error al guardar','error'); }
+}
+
+document.getElementById('savePostBtn').addEventListener('click', () => savePost('published'));
+document.getElementById('saveDraftBtn').addEventListener('click', () => savePost('draft'));
+
+// ── LOAD POSTS ────────────────────────────────────────────────────────────
+async function loadPosts() {
+  const tbody = document.querySelector('#postsTable tbody');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;font-family:var(--mono);font-size:.75rem;color:var(--muted)">Cargando...</td></tr>';
+  try {
+    let snap; try { snap = await getDocs(query(collection(db,'posts'),orderBy('createdAt','desc'))); }
+    catch { snap = await getDocs(collection(db,'posts')); }
+    if(snap.empty) { tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;font-family:var(--mono);font-size:.75rem;color:var(--muted)">No hay artículos aún.</td></tr>'; return; }
+    tbody.innerHTML = '';
+    snap.docs.forEach(d => {
+      const p = {id:d.id,...d.data()};
+      const badge = p.status==='published'?'badge-green':'badge-yellow';
+      const label = p.status==='published'?'PUBLICADO':'BORRADOR';
+      tbody.insertAdjacentHTML('beforeend',`
+        <tr>
+          <td><strong>${p.title}</strong></td>
+          <td>${p.category||'—'}</td>
+          <td><span class="badge ${badge}">${label}</span></td>
+          <td style="font-family:var(--mono);font-size:.72rem">${fmtDate(p.createdAt)}</td>
+          <td><div class="actions">
+            <button class="btn btn-cyan btn-sm" onclick="editPost('${p.id}')">EDITAR</button>
+            <button class="btn btn-red btn-sm" onclick="deletePost('${p.id}','${p.title}')">ELIMINAR</button>
+          </div></td>
+        </tr>`);
+    });
+  } catch(e) { console.error(e); tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--red);font-family:var(--mono);font-size:.75rem;padding:20px">Error al cargar.</td></tr>'; }
+}
+
+window.editPost = async (id) => {
+  const snap = await getDoc(doc(db,'posts',id));
+  if(!snap.exists()) return;
+  navTo('newpost');
+  setTimeout(() => initNewPost({id,...snap.data()}), 100);
+};
+
+window.deletePost = async (id, title) => {
+  if(!confirmDel(`"${title}"`)) return;
+  await deleteDoc(doc(db,'posts',id));
+  toast('Artículo eliminado');
+  loadPosts();
+};
+
+// ── SLIDES ────────────────────────────────────────────────────────────────
+async function loadSlides() {
+  const grid = document.getElementById('slidesGrid');
+  grid.innerHTML = '<p style="font-family:var(--mono);font-size:.75rem;color:var(--muted)">Cargando...</p>';
+  try {
+    let snap; try { snap = await getDocs(query(collection(db,'slides'),orderBy('order','asc'))); }
+    catch { snap = await getDocs(collection(db,'slides')); }
+    if(snap.empty) { grid.innerHTML='<p style="font-family:var(--mono);font-size:.75rem;color:var(--muted)">No hay slides. Creá el primero.</p>'; return; }
+    grid.innerHTML = '';
+    snap.docs.forEach(d => {
+      const s = {id:d.id,...d.data()};
+      grid.insertAdjacentHTML('beforeend',`
+        <div class="slide-card">
+          ${s.imageUrl
+            ? `<img src="${s.imageUrl}" class="slide-card-img" style="width:100%;height:130px;object-fit:cover" />`
+            : `<div class="slide-card-img">🖼️</div>`}
+          <div class="slide-card-body">
+            <div class="slide-card-title">${s.title||'Sin título'}</div>
+            <div class="slide-order">Orden: <strong>${s.order||0}</strong></div>
+            ${s.caption?`<div style="font-family:var(--mono);font-size:.65rem;color:var(--muted);margin-top:4px">${s.caption}</div>`:''}
+            <div class="slide-card-actions">
+              <button class="btn btn-cyan btn-sm" onclick="editSlide('${s.id}')">EDITAR</button>
+              <button class="btn btn-red btn-sm" onclick="deleteSlide('${s.id}')">ELIMINAR</button>
             </div>
           </div>
-        </div>
-      </div>`;
-  }).join('');
-}
-
-// Preview de arquivos selecionados
-get('pFiles').addEventListener('change', e => {
-  const files = [...e.target.files];
-  const preview = get('filePreview');
-  const grid = get('previewGrid');
-  if (!files.length) { preview.style.display='none'; return; }
-  preview.style.display = 'block';
-  grid.innerHTML = files.map(f => {
-    const url = URL.createObjectURL(f);
-    const isVideo = f.type.startsWith('video');
-    return `<div style="border-radius:6px;overflow:hidden;height:70px;background:#0d1117;border:1px solid #21262d;">
-      ${isVideo
-        ? `<video src="${url}" style="width:100%;height:100%;object-fit:cover;" muted></video>`
-        : `<img src="${url}" style="width:100%;height:100%;object-fit:cover;" />`}
-    </div>`;
-  }).join('');
-});
-
-// Novo Pack
-get('btnNewPack').addEventListener('click', () => {
-  get('packForm').reset();
-  get('previewGrid').innerHTML = '';
-  get('filePreview').style.display = 'none';
-  get('uploadProgress').style.display = 'none';
-  openModal('mPack');
-});
-
-get('packForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const btn   = get('savePackBtn');
-  const files = [...get('pFiles').files];
-  if (!files.length) { toast('Seleccioná al menos un archivo','error'); return; }
-
-  const title  = get('pTitle').value.trim();
-  const desc   = get('pDesc').value.trim();
-  const userId = get('packTo').value;
-
-  btn.textContent = 'Subiendo...'; btn.disabled = true;
-  get('uploadProgress').style.display = 'block';
-
-  try {
-    const uploaded = [];
-    for (let i=0; i<files.length; i++) {
-      const pct = Math.round(i/files.length*100);
-      get('progressBar').style.width = pct+'%';
-      get('progressTxt').textContent = `Subiendo ${i+1} de ${files.length}...`;
-      const res = await uploadToCloudinary(files[i], p => {
-        const overall = Math.round((i + p/100) / files.length * 100);
-        get('progressBar').style.width = overall+'%';
-      });
-      uploaded.push({
-        url:           res.secure_url,
-        public_id:     res.public_id,
-        resource_type: res.resource_type,
-        format:        res.format,
-        bytes:         res.bytes
-      });
-    }
-
-    get('progressBar').style.width = '100%';
-    get('progressTxt').textContent = 'Guardando en base de datos...';
-
-    // Salvar no Firestore
-    const packRef = doc(collection(db,'packs'));
-    await setDoc(packRef, {
-      title, description: desc,
-      files: uploaded,
-      assignedTo: userId ? [userId] : [],
-      createdAt: serverTimestamp()
+        </div>`);
     });
-
-    toast(`✅ Pack "${title}" creado con ${uploaded.length} archivo(s)!`, 'success');
-    closeModal('mPack');
-    await loadPacks();
-    updateStats();
-  } catch(err) {
-    console.error(err);
-    toast('Error al subir: ' + err.message, 'error');
-  } finally {
-    btn.textContent = '☁️ Subir y Guardar'; btn.disabled = false;
-    get('uploadProgress').style.display = 'none';
-  }
-});
-
-// Asignar pack a usuario
-function fillAssignSelect() {
-  const opts = `<option value="">— Seleccionar usuario —</option>` +
-    allUsers.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
-  if(get('assignTo')) get('assignTo').innerHTML = opts;
+  } catch(e) { console.error(e); grid.innerHTML='<p style="color:var(--red);font-family:var(--mono)">Error al cargar slides.</p>'; }
 }
 
-window.openAssignModal = pid => {
-  get('assignPackId').value = pid;
-  fillAssignSelect();
-  openModal('mAssign');
+document.getElementById('newSlideBtn').addEventListener('click', () => {
+  document.getElementById('slideModalTitle').textContent = 'NUEVO SLIDE';
+  document.getElementById('editSlideId').value = '';
+  document.getElementById('sTitle').value = '';
+  document.getElementById('sCaption').value = '';
+  document.getElementById('sOrder').value = '0';
+  document.getElementById('sImageUrl').value = '';
+  document.getElementById('sLink').value = '';
+  renderSlidePreview(null);
+  openModal('slideModal');
+});
+
+window.editSlide = async (id) => {
+  const snap = await getDoc(doc(db,'slides',id));
+  if(!snap.exists()) return;
+  const s = snap.data();
+  document.getElementById('slideModalTitle').textContent = 'EDITAR SLIDE';
+  document.getElementById('editSlideId').value = id;
+  document.getElementById('sTitle').value = s.title||'';
+  document.getElementById('sCaption').value = s.caption||'';
+  document.getElementById('sOrder').value = s.order||0;
+  document.getElementById('sImageUrl').value = s.imageUrl||'';
+  document.getElementById('sLink').value = s.link||'';
+  renderSlidePreview(s.imageUrl||null);
+  openModal('slideModal');
 };
 
-get('assignForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const pid = get('assignPackId').value;
-  const uid = get('assignTo').value;
-  if (!uid) { toast('Seleccioná un usuario','error'); return; }
+document.getElementById('saveSlideBtn').addEventListener('click', async () => {
+  const editId = document.getElementById('editSlideId').value;
+  const data = {
+    title:    document.getElementById('sTitle').value.trim(),
+    caption:  document.getElementById('sCaption').value.trim(),
+    order:    parseInt(document.getElementById('sOrder').value)||0,
+    imageUrl: document.getElementById('sImageUrl').value,
+    link:     document.getElementById('sLink').value.trim(),
+    updatedAt: serverTimestamp()
+  };
   try {
-    const pack = allPacks.find(p=>p.id===pid);
-    const current = pack?.assignedTo || [];
-    if (current.includes(uid)) { toast('Este usuario ya tiene este pack','info'); return; }
-    await updateDoc(doc(db,'packs',pid), { assignedTo: [...current, uid] });
-    toast('✅ Pack asignado!', 'success');
-    closeModal('mAssign');
-    await loadPacks();
-  } catch(err) { toast('Error: '+err.message,'error'); }
+    if(editId) { await updateDoc(doc(db,'slides',editId),data); toast('Slide actualizado'); }
+    else { data.createdAt=serverTimestamp(); await addDoc(collection(db,'slides'),data); toast('Slide creado'); }
+    closeModal('slideModal'); loadSlides();
+  } catch(e) { console.error(e); toast('Error al guardar slide','error'); }
 });
 
-window.askDeletePack = (pid, title) =>
-  confirm(`¿Eliminar el pack "${title}"? Los archivos en Cloudinary serán desvinculados.`, () => deletePack(pid));
+window.deleteSlide = async (id) => {
+  if(!confirmDel('este slide')) return;
+  await deleteDoc(doc(db,'slides',id)); toast('Slide eliminado'); loadSlides();
+};
 
-async function deletePack(pid) {
+// ── MENU ──────────────────────────────────────────────────────────────────
+let menuItems = [];
+
+async function loadMenu() {
+  const list = document.getElementById('menuList');
+  list.innerHTML = '<p style="font-family:var(--mono);font-size:.75rem;color:var(--muted)">Cargando...</p>';
   try {
-    await deleteDoc(doc(db,'packs',pid));
-    toast('🗑️ Pack eliminado','success');
-    await loadPacks();
-  } catch(err) { toast('Error: '+err.message,'error'); }
+    let snap; try { snap = await getDocs(query(collection(db,'menu'),orderBy('order','asc'))); }
+    catch { snap = await getDocs(collection(db,'menu')); }
+    menuItems = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderMenuList();
+  } catch(e) { console.error(e); list.innerHTML='<p style="color:var(--red);font-family:var(--mono)">Error al cargar menú.</p>'; }
 }
 
-// ── CONFIRM ───────────────────────────────────────────────────────────────────
-get('confirmSi').addEventListener('click', () => { closeModal('mConfirm'); confirmCb?.(); });
-get('confirmNo').addEventListener('click', () => closeModal('mConfirm'));
-
-// ── FECHAR MODAIS ─────────────────────────────────────────────────────────────
-qsa('[data-close]').forEach(b => b.addEventListener('click', closeAll));
-qsa('.modal-bg').forEach(bg => bg.addEventListener('click', e => { if(e.target===bg) closeAll(); }));
-document.addEventListener('keydown', e => { if(e.key==='Escape') closeAll(); });
-
-// ── MENSAGENS DOS CLIENTES ────────────────────────────────────────────────────
-let clientMessages = [];
-
-async function loadClientMessages() {
-  try {
-    let snap;
-    try {
-      snap = await getDocs(query(collection(db,'clientMessages'), orderBy('createdAt','desc')));
-    } catch {
-      snap = await getDocs(collection(db,'clientMessages'));
-    }
-    clientMessages = snap.docs.map(d=>({id:d.id,...d.data()}));
-    renderClientMessages();
-    // Badge de contagem
-    const count = get('clientMsgCount');
-    if(count && clientMessages.length > 0) {
-      count.textContent = clientMessages.length;
-      count.style.display = 'inline';
-    }
-  } catch(err) { console.error('Client msgs:', err); }
-}
-
-function renderClientMessages() {
-  const el = get('msgListClient');
-  if(!el) return;
-  if(!clientMessages.length) {
-    el.innerHTML = `<div class="empty"><span class="empty-ic">📥</span><p>Sin mensajes de clientes aún</p></div>`;
-    return;
-  }
-  el.innerHTML = clientMessages.map(m => {
-    const u = allUsers.find(x=>x.id===m.userId);
-    return `
-      <div class="msg-card">
-        <div class="msg-top">
-          <span class="msg-to">📥 ${m.userName || u?.name || 'Cliente'}</span>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span class="msg-date">${fmtDate(m.createdAt)}</span>
-            <button class="btn-x" onclick="askDeleteClientMsg('${m.id}')">✕</button>
+function renderMenuList() {
+  const list = document.getElementById('menuList');
+  if(!menuItems.length) { list.innerHTML='<p style="font-family:var(--mono);font-size:.75rem;color:var(--muted)">No hay ítems de menú. Creá el primero.</p>'; return; }
+  const roots = menuItems.filter(i=>!i.parentId).sort((a,b)=>(a.order||0)-(b.order||0));
+  const children = menuItems.filter(i=>i.parentId);
+  list.innerHTML = '';
+  roots.forEach(item => {
+    const subs = children.filter(c=>c.parentId===item.id);
+    const rowHtml = `
+      <div class="menu-item-row">
+        <span class="drag-handle">⠿</span>
+        <span class="menu-item-label">${item.label}</span>
+        <span class="menu-item-url">${item.url||''}</span>
+        ${subs.length?`<span class="badge badge-cyan" style="border-color:rgba(0,212,255,.2);color:var(--cyan);background:rgba(0,212,255,.08)">${subs.length} sub</span>`:''}
+        <div class="actions">
+          <button class="btn btn-cyan btn-sm" onclick="editMenuItem('${item.id}')">EDITAR</button>
+          <button class="btn btn-red btn-sm" onclick="deleteMenuItem('${item.id}')">ELIMINAR</button>
+        </div>
+      </div>
+      ${subs.map(s=>`
+        <div class="menu-children">
+          <div class="menu-item-row" style="background:rgba(0,212,255,0.03);border-color:rgba(0,212,255,.1)">
+            <span class="drag-handle">⠿</span>
+            <span style="color:var(--cyan);font-size:.75rem;margin-right:4px">↳</span>
+            <span class="menu-item-label">${s.label}</span>
+            <span class="menu-item-url">${s.url||''}</span>
+            <div class="actions">
+              <button class="btn btn-cyan btn-sm" onclick="editMenuItem('${s.id}')">EDITAR</button>
+              <button class="btn btn-red btn-sm" onclick="deleteMenuItem('${s.id}')">ELIMINAR</button>
+            </div>
           </div>
-        </div>
-        <p class="msg-txt">${m.text}</p>
-      </div>`;
-  }).join('');
+        </div>`).join('')}`;
+    list.insertAdjacentHTML('beforeend', rowHtml);
+  });
 }
 
-window.askDeleteClientMsg = mid =>
-  confirm('¿Eliminar este mensaje del cliente?', async () => {
-    await deleteDoc(doc(db,'clientMessages',mid));
-    toast('🗑️ Mensaje eliminado','success');
-    await loadClientMessages();
+document.getElementById('newMenuItemBtn').addEventListener('click', () => {
+  document.getElementById('menuModalTitle').textContent = 'NUEVO ÍTEM DE MENÚ';
+  document.getElementById('editMenuId').value = '';
+  document.getElementById('mLabel').value = '';
+  document.getElementById('mUrl').value = '';
+  document.getElementById('mOrder').value = '0';
+  // Populate parent dropdown
+  const sel = document.getElementById('mParent');
+  sel.innerHTML = '<option value="">Ninguno (ítem raíz)</option>';
+  menuItems.filter(i=>!i.parentId).forEach(i => {
+    sel.insertAdjacentHTML('beforeend',`<option value="${i.id}">${i.label}</option>`);
   });
+  sel.value = '';
+  openModal('menuModal');
+});
 
-// Tabs de mensagens
-window.switchMsgTab = tab => {
-  const admin  = get('msgListAdmin');
-  const client = get('msgListClient');
-  const btnA   = get('tabAdmin');
-  const btnC   = get('tabClient');
-  if(tab==='admin'){
-    admin.style.display='flex'; client.style.display='none';
-    btnA.className='btn btn-blue btn-sm'; btnC.className='btn btn-gray btn-sm';
-  } else {
-    admin.style.display='none'; client.style.display='flex';
-    btnA.className='btn btn-gray btn-sm'; btnC.className='btn btn-blue btn-sm';
-  }
+window.editMenuItem = async (id) => {
+  const item = menuItems.find(i=>i.id===id); if(!item) return;
+  document.getElementById('menuModalTitle').textContent = 'EDITAR ÍTEM';
+  document.getElementById('editMenuId').value = id;
+  document.getElementById('mLabel').value = item.label||'';
+  document.getElementById('mUrl').value = item.url||'';
+  document.getElementById('mOrder').value = item.order||0;
+  const sel = document.getElementById('mParent');
+  sel.innerHTML = '<option value="">Ninguno (ítem raíz)</option>';
+  menuItems.filter(i=>!i.parentId&&i.id!==id).forEach(i => {
+    sel.insertAdjacentHTML('beforeend',`<option value="${i.id}">${i.label}</option>`);
+  });
+  sel.value = item.parentId||'';
+  openModal('menuModal');
 };
 
-// ── PROYECTOS / PORTAFOLIO ────────────────────────────────────────────────────
-const CLOUD_NAME_PRJ    = "dc0bxgeea";
-const UPLOAD_PRESET_PRJ = "hs_gestion_packs"; // mesmo preset
-
-let allProjects = [], projectFilter = 'all';
-
-async function loadProjects() {
+document.getElementById('saveMenuItemBtn').addEventListener('click', async () => {
+  const label = document.getElementById('mLabel').value.trim();
+  if(!label) { toast('La etiqueta es obligatoria','error'); return; }
+  const editId = document.getElementById('editMenuId').value;
+  const data = {
+    label,
+    url:      document.getElementById('mUrl').value.trim(),
+    parentId: document.getElementById('mParent').value || null,
+    order:    parseInt(document.getElementById('mOrder').value)||0,
+    updatedAt: serverTimestamp()
+  };
   try {
-    let snap;
-    try { snap = await getDocs(query(collection(db,'projects'), orderBy('createdAt','desc'))); }
-    catch { snap = await getDocs(collection(db,'projects')); }
-    allProjects = snap.docs.map(d=>({id:d.id,...d.data()}));
-  } catch(err) { console.error('Projects:', err); }
-  renderProjects();
-}
+    if(editId) { await updateDoc(doc(db,'menu',editId),data); toast('Ítem actualizado'); }
+    else { data.createdAt=serverTimestamp(); await addDoc(collection(db,'menu'),data); toast('Ítem creado'); }
+    closeModal('menuModal'); loadMenu();
+  } catch(e) { console.error(e); toast('Error al guardar ítem','error'); }
+});
 
-function renderProjects() {
-  const el = get('projectsAdminGrid');
-  if(!el) return;
-  const filtered = projectFilter === 'all'
-    ? allProjects
-    : allProjects.filter(p => p.category === projectFilter);
-
-  if(!filtered.length) {
-    el.innerHTML = `<div class="empty" style="grid-column:1/-1"><span class="empty-ic">🗂️</span><p>Sin proyectos${projectFilter!=='all'?' en esta categoría':' aún'}.</p></div>`;
-    return;
-  }
-
-  const catLabel = { site:'🌐 Sitio Web', redes:'📱 Redes', convite:'✉️ Convite' };
-  el.innerHTML = filtered.map(p => `
-    <div class="pack-card">
-      <div class="pack-thumb" style="height:160px;">
-        <img src="${p.imageUrl}" alt="${p.title}" style="width:100%;height:100%;object-fit:cover;" />
-        <div style="position:absolute;top:8px;left:8px;">
-          <span class="badge badge-blue" style="font-size:.65rem;">${catLabel[p.category]||p.category}</span>
-        </div>
-      </div>
-      <div class="pack-body">
-        <div class="pack-name">${p.title}</div>
-        <div class="pack-desc">${p.description||''}</div>
-        <div class="pack-ft" style="margin-top:10px;">
-          ${p.link?`<a href="${p.link}" target="_blank" class="btn btn-gray btn-sm">🔗 Ver</a>`:'<span></span>'}
-          <button class="btn-x" onclick="askDeleteProject('${p.id}','${p.title.replace(/'/g,"\\'")}')">✕</button>
-        </div>
-      </div>
-    </div>`).join('');
-}
-
-window.filterProjects = filter => {
-  projectFilter = filter;
-  ['all','site','redes','convite'].forEach(f => {
-    const btn = get(`pf-${f}`);
-    if(btn) btn.className = `btn btn-sm ${f===filter?'btn-blue':'btn-gray'}`;
-  });
-  renderProjects();
+window.deleteMenuItem = async (id) => {
+  if(!confirmDel('este ítem de menú')) return;
+  await deleteDoc(doc(db,'menu',id)); toast('Ítem eliminado'); loadMenu();
 };
 
-// Preview de imagem antes de subir
-get('prjImage')?.addEventListener('change', e => {
-  const file = e.target.files[0];
-  if(!file) return;
-  const preview = get('prjPreview');
-  const wrap    = get('prjPreviewWrap');
-  if(!preview || !wrap) return;
-  preview.src = URL.createObjectURL(file);
-  wrap.style.display = 'block';
-});
-
-// Abrir modal
-get('btnNewProject')?.addEventListener('click', () => {
-  get('projectForm')?.reset();
-  const wrap = get('prjPreviewWrap');
-  if(wrap) wrap.style.display='none';
-  if(get('prjProgress')) get('prjProgress').style.display='none';
-  openModal('mProject');
-});
-
-// Salvar projeto
-get('projectForm')?.addEventListener('submit', async e => {
-  e.preventDefault();
-  const btn   = get('saveProjectBtn');
-  const file  = get('prjImage')?.files[0];
-  if(!file) { toast('Seleccioná una imagen','error'); return; }
-
-  const title    = get('prjTitle')?.value.trim();
-  const category = get('prjCategory')?.value;
-  const desc     = get('prjDesc')?.value.trim();
-  const link     = get('prjLink')?.value.trim();
-
-  btn.textContent = 'Subiendo...'; btn.disabled = true;
-  if(get('prjProgress')) get('prjProgress').style.display='block';
-
+// ── USERS ─────────────────────────────────────────────────────────────────
+async function loadUsers() {
+  const tbody = document.querySelector('#usersTable tbody');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;font-family:var(--mono);font-size:.75rem;color:var(--muted)">Cargando...</td></tr>';
   try {
-    // Upload da imagem para Cloudinary
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', UPLOAD_PRESET_PRJ);
-    formData.append('folder', `hs-gestion/projects/${category}`);
-
-    const xhr = new XMLHttpRequest();
-    const uploadResult = await new Promise((resolve, reject) => {
-      xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME_PRJ}/image/upload`);
-      xhr.upload.onprogress = ev => {
-        if(ev.lengthComputable) {
-          const pct = Math.round(ev.loaded/ev.total*100);
-          if(get('prjProgressBar')) get('prjProgressBar').style.width = pct+'%';
-          if(get('prjProgressTxt')) get('prjProgressTxt').textContent = `Subiendo... ${pct}%`;
-        }
-      };
-      xhr.onload = () => {
-        const res = JSON.parse(xhr.responseText);
-        if(xhr.status===200) resolve(res);
-        else reject(new Error(res.error?.message || 'Upload error'));
-      };
-      xhr.onerror = () => reject(new Error('Network error'));
-      xhr.send(formData);
+    const snap = await getDocs(collection(db,'users'));
+    if(snap.empty) { tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;font-family:var(--mono);font-size:.75rem;color:var(--muted)">No hay usuarios aún.</td></tr>'; return; }
+    tbody.innerHTML='';
+    snap.docs.forEach(d => {
+      const u = {id:d.id,...d.data()};
+      tbody.insertAdjacentHTML('beforeend',`
+        <tr>
+          <td><strong>${u.name||'—'}</strong></td>
+          <td style="font-family:var(--mono);font-size:.72rem">${u.email||'—'}</td>
+          <td>${u.service||'—'}</td>
+          <td><span class="badge ${u.active===false?'badge-red':'badge-green'}">${u.active===false?'INACTIVO':'ACTIVO'}</span></td>
+          <td><div class="actions">
+            <button class="btn btn-cyan btn-sm" onclick="editUser('${u.id}')">EDITAR</button>
+            <button class="btn btn-red btn-sm" onclick="deleteUser('${u.id}','${u.name||u.email}')">ELIMINAR</button>
+          </div></td>
+        </tr>`);
     });
+  } catch(e) { console.error(e); toast('Error al cargar usuarios','error'); }
+}
 
-    // Salvar no Firestore
-    await setDoc(doc(collection(db,'projects')), {
-      title, category, description: desc, link: link||'',
-      imageUrl:   uploadResult.secure_url,
-      public_id:  uploadResult.public_id,
-      createdAt:  serverTimestamp()
-    });
+document.getElementById('newUserBtn').addEventListener('click', () => {
+  document.getElementById('userModalTitle').textContent = 'NUEVO USUARIO';
+  document.getElementById('editUserId').value = '';
+  ['uName','uEmail','uPass','uPhone','uNotes'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('uService').value='';
+  openModal('userModal');
+});
 
-    toast(`✅ Proyecto "${title}" guardado!`, 'success');
-    closeModal('mProject');
-    await loadProjects();
-  } catch(err) {
-    console.error(err);
-    toast('Error: '+err.message, 'error');
-  } finally {
-    btn.textContent='☁️ Guardar Proyecto'; btn.disabled=false;
-    if(get('prjProgress')) get('prjProgress').style.display='none';
+window.editUser = async (id) => {
+  const snap = await getDoc(doc(db,'users',id));
+  if(!snap.exists()) return;
+  const u = snap.data();
+  document.getElementById('userModalTitle').textContent = 'EDITAR USUARIO';
+  document.getElementById('editUserId').value = id;
+  document.getElementById('uName').value = u.name||'';
+  document.getElementById('uEmail').value = u.email||'';
+  document.getElementById('uPass').value = '';
+  document.getElementById('uService').value = u.service||'';
+  document.getElementById('uPhone').value = u.phone||'';
+  document.getElementById('uNotes').value = u.notes||'';
+  openModal('userModal');
+};
+
+document.getElementById('saveUserBtn').addEventListener('click', async () => {
+  const name  = document.getElementById('uName').value.trim();
+  const email = document.getElementById('uEmail').value.trim();
+  const pass  = document.getElementById('uPass').value;
+  const editId = document.getElementById('editUserId').value;
+  if(!name||!email) { toast('Nombre y email son obligatorios','error'); return; }
+  const data = {
+    name, email,
+    service: document.getElementById('uService').value,
+    phone:   document.getElementById('uPhone').value.trim(),
+    notes:   document.getElementById('uNotes').value.trim(),
+    active:  true,
+    updatedAt: serverTimestamp()
+  };
+  try {
+    if(editId) {
+      await updateDoc(doc(db,'users',editId),data);
+      toast('Usuario actualizado');
+    } else {
+      if(!pass||pass.length<6) { toast('Contraseña mínima 6 caracteres','error'); return; }
+      // Crear en Firebase Auth
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      data.uid = cred.user.uid;
+      data.createdAt = serverTimestamp();
+      await setDoc(doc(db,'users',cred.user.uid), data);
+      toast('Usuario creado correctamente');
+    }
+    closeModal('userModal'); loadUsers();
+  } catch(e) {
+    console.error(e);
+    let msg = 'Error al guardar usuario';
+    if(e.code==='auth/email-already-in-use') msg='Email ya registrado en Firebase Auth';
+    toast(msg,'error');
   }
 });
 
-window.askDeleteProject = (pid, title) =>
-  confirm(`¿Eliminar el proyecto "${title}"?`, async () => {
-    await deleteDoc(doc(db,'projects',pid));
-    toast('🗑️ Proyecto eliminado','success');
-    await loadProjects();
-  });
+window.deleteUser = async (id, name) => {
+  if(!confirmDel(`usuario "${name}"`)) return;
+  await deleteDoc(doc(db,'users',id)); toast('Usuario eliminado del Firestore'); loadUsers();
+};
 
+// ── CONTACTS ──────────────────────────────────────────────────────────────
+async function loadContacts() {
+  const tbody = document.querySelector('#contactsTable tbody');
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;font-family:var(--mono);font-size:.75rem;color:var(--muted)">Cargando...</td></tr>';
+  try {
+    let snap; try { snap = await getDocs(query(collection(db,'contacts'),orderBy('createdAt','desc'))); }
+    catch { snap = await getDocs(collection(db,'contacts')); }
+    if(snap.empty) { tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;font-family:var(--mono);font-size:.75rem;color:var(--muted)">No hay consultas aún.</td></tr>'; return; }
+    tbody.innerHTML='';
+    snap.docs.forEach(d=>{
+      const c={id:d.id,...d.data()};
+      tbody.insertAdjacentHTML('beforeend',`
+        <tr>
+          <td><strong>${c.name||'—'}</strong></td>
+          <td style="font-family:var(--mono);font-size:.72rem"><a href="mailto:${c.email}" style="color:var(--green)">${c.email||'—'}</a></td>
+          <td style="font-family:var(--mono);font-size:.72rem">${c.phone||'—'}</td>
+          <td>${c.service||'—'}</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.8rem;color:var(--muted)">${c.message||'—'}</td>
+          <td style="font-family:var(--mono);font-size:.68rem;white-space:nowrap">${fmtDate(c.createdAt)}</td>
+        </tr>`);
+    });
+  } catch(e) { console.error(e); }
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const [posts,users,slides,contacts] = await Promise.all([
+      getDocs(collection(db,'posts')),
+      getDocs(collection(db,'users')),
+      getDocs(collection(db,'slides')),
+      getDocs(collection(db,'contacts'))
+    ]);
+    document.getElementById('sPosts').textContent    = posts.size;
+    document.getElementById('sUsers').textContent    = users.size;
+    document.getElementById('sSlides').textContent   = slides.size;
+    document.getElementById('sContacts').textContent = contacts.size;
+
+    // Recent contacts
+    const tbody = document.querySelector('#recentContacts tbody');
+    const recentSnap = contacts.docs
+      .map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>{
+        const ta = a.createdAt?.toDate?a.createdAt.toDate():new Date(0);
+        const tb = b.createdAt?.toDate?b.createdAt.toDate():new Date(0);
+        return tb-ta;
+      }).slice(0,5);
+
+    tbody.innerHTML = recentSnap.length
+      ? recentSnap.map(c=>`<tr><td><strong>${c.name||'—'}</strong></td><td>${c.service||'—'}</td><td style="font-family:var(--mono);font-size:.72rem"><a href="mailto:${c.email}" style="color:var(--green)">${c.email||'—'}</a></td><td style="font-family:var(--mono);font-size:.68rem">${fmtDate(c.createdAt)}</td></tr>`).join('')
+      : '<tr><td colspan="4" style="text-align:center;padding:16px;font-family:var(--mono);font-size:.75rem;color:var(--muted)">Sin consultas aún.</td></tr>';
+  } catch(e) { console.error(e); }
+}
