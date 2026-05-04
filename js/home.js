@@ -273,49 +273,47 @@ async function loadBlog(loadMore = false) {
   const grid    = document.getElementById('blogGrid');
   const moreBtn = document.getElementById('blogMore');
 
+  if (!loadMore) grid.innerHTML = '<div class="blog-empty"><div style="font-size:2rem;margin-bottom:12px">📡</div>Cargando artículos...</div>';
+
   try {
-    let q;
-    if (loadMore && lastDoc) {
-      q = query(collection(db,'posts'), where('status','==','published'), orderBy('createdAt','desc'), startAfter(lastDoc), limit(POSTS_PER_PAGE));
-    } else {
-      q = query(collection(db,'posts'), where('status','==','published'), orderBy('createdAt','desc'), limit(POSTS_PER_PAGE));
-      grid.innerHTML = '';
-    }
+    // Busca todos os publicados (sem orderBy composto — evita exigir índice)
+    const snap = await getDocs(query(
+      collection(db, 'posts'),
+      where('status', '==', 'published')
+    ));
 
-    const snap = await getDocs(q);
+    let posts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    if (snap.empty && !loadMore) {
+    // Ordenar client-side por data
+    posts.sort((a, b) => {
+      const ta = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+      const tb = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+      return tb - ta;
+    });
+
+    if (!posts.length) {
       grid.innerHTML = `<div class="blog-empty"><div style="font-size:2rem;margin-bottom:12px">📡</div>No hay artículos publicados aún. Volvé pronto.</div>`;
+      if (moreBtn) moreBtn.style.display = 'none';
       return;
     }
 
-    if (snap.empty) { allLoaded = true; if(moreBtn) moreBtn.style.display='none'; return; }
+    // Paginação client-side
+    const page    = loadMore ? (grid.dataset.page ? parseInt(grid.dataset.page) + 1 : 1) : 0;
+    const start   = page * POSTS_PER_PAGE;
+    const slice   = posts.slice(start, start + POSTS_PER_PAGE);
 
-    lastDoc = snap.docs[snap.docs.length-1];
+    if (!loadMore) grid.innerHTML = '';
+    slice.forEach(p => grid.insertAdjacentHTML('beforeend', buildCard(p)));
+    grid.dataset.page  = page;
+    grid.dataset.total = posts.length;
 
-    snap.docs.forEach(d => {
-      const p = { id:d.id, ...d.data() };
-      grid.insertAdjacentHTML('beforeend', buildCard(p));
-    });
-
-    if (moreBtn) moreBtn.style.display = snap.docs.length < POSTS_PER_PAGE ? 'none' : 'flex';
+    if (moreBtn) {
+      moreBtn.style.display = (start + POSTS_PER_PAGE < posts.length) ? 'flex' : 'none';
+    }
 
   } catch(err) {
     console.error('loadBlog error:', err);
-    // Tenta sem orderBy (sem índice criado ainda)
-    try {
-      const snap2 = await getDocs(collection(db,'posts'));
-      const posts = snap2.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.status==='published');
-      if (!posts.length) {
-        grid.innerHTML = `<div class="blog-empty"><div style="font-size:2rem;margin-bottom:12px">📡</div>No hay artículos publicados aún.</div>`;
-      } else {
-        grid.innerHTML = '';
-        posts.forEach(p => grid.insertAdjacentHTML('beforeend', buildCard(p)));
-      }
-      if(moreBtn) moreBtn.style.display='none';
-    } catch(e2) {
-      grid.innerHTML = `<div class="blog-empty">Error al cargar artículos.</div>`;
-    }
+    grid.innerHTML = `<div class="blog-empty">Error al cargar artículos. Revisá la consola.</div>`;
   }
 }
 

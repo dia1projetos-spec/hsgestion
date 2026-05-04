@@ -2,7 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, getDocs, addDoc, setDoc, doc, deleteDoc, updateDoc, query, orderBy, limit, getDoc, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
 
 const firebaseConfig = {
   apiKey:"AIzaSyDmMP5ZCfl9JfkQQf1xIfcGAei_BPLvKj8",authDomain:"hs-gestion-a102e.firebaseapp.com",
@@ -11,10 +11,9 @@ const firebaseConfig = {
 };
 const ADMIN_EMAIL = "riconetson@gmail.com";
 
-const app     = initializeApp(firebaseConfig);
-const auth    = getAuth(app);
-const db      = getFirestore(app);
-const storage = getStorage(app);
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
 
 // ── UTILS ──────────────────────────────────────────────────────────────────
 function toast(msg, type='success') {
@@ -116,14 +115,18 @@ function initNewPost(editData = null) {
         ]
       }
     });
-    // Image handler
+    // Image handler inline no Quill
     quill.getModule('toolbar').addHandler('image', () => {
       const inp = document.createElement('input'); inp.type='file'; inp.accept='image/*';
       inp.onchange = async () => {
         const file = inp.files[0]; if(!file) return;
         toast('Subiendo imagen...');
-        const url = await uploadFile(file, 'post-images/'+Date.now()+'-'+file.name);
-        if(url) { const range = quill.getSelection(true); quill.insertEmbed(range.index,'image',url,'user'); }
+        try {
+          const url = await uploadToCloudinary(file, 'post-images', null, null);
+          const range = quill.getSelection(true);
+          quill.insertEmbed(range.index, 'image', url, 'user');
+          toast('Imagen insertada ✓');
+        } catch(e) { /* já mostrado */ }
       };
       inp.click();
     });
@@ -133,58 +136,79 @@ function initNewPost(editData = null) {
   if(editData?.content) quill.clipboard.dangerouslyPasteHTML(editData.content);
 }
 
-// ── UPLOAD HELPER ─────────────────────────────────────────────────────────
-function uploadFile(file, path, progressBarId = null) {
+// ── CLOUDINARY UPLOAD ─────────────────────────────────────────────────────
+const CLOUD_NAME    = "dc0bxgeea";
+const UPLOAD_PRESET = "hs_gestion_packs";
+
+function uploadToCloudinary(file, folder, wrapId, barId) {
   return new Promise((resolve, reject) => {
-    const storageRef = ref(storage, path);
-    const task = uploadBytesResumable(storageRef, file);
-    if(progressBarId) {
-      const wrap = document.getElementById(progressBarId+'Wrap')||document.getElementById(progressBarId)?.parentElement;
-      if(wrap) wrap.style.display='block';
-    }
-    task.on('state_changed',
-      snap => {
-        const pct = (snap.bytesTransferred/snap.totalBytes)*100;
-        const bar = document.getElementById(progressBarId);
-        if(bar) bar.style.width = pct+'%';
-      },
-      err => { toast('Error al subir imagen','error'); reject(err); },
-      async () => { const url = await getDownloadURL(task.snapshot.ref); resolve(url); }
-    );
+    const wrap = wrapId ? document.getElementById(wrapId) : null;
+    const bar  = barId  ? document.getElementById(barId)  : null;
+    if(wrap) wrap.style.display = 'block';
+    if(bar)  bar.style.width = '0%';
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', UPLOAD_PRESET);
+    formData.append('folder', 'hs-gestion/' + folder);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`);
+
+    xhr.upload.onprogress = e => {
+      if(e.lengthComputable && bar) bar.style.width = Math.round(e.loaded/e.total*100) + '%';
+    };
+
+    xhr.onload = () => {
+      const res = JSON.parse(xhr.responseText);
+      if(xhr.status === 200) {
+        if(wrap) setTimeout(() => wrap.style.display='none', 600);
+        resolve(res.secure_url);
+      } else {
+        const msg = res.error?.message || 'Upload falhou';
+        console.error('Cloudinary error:', msg);
+        toast('Error Cloudinary: ' + msg, 'error');
+        reject(new Error(msg));
+      }
+    };
+    xhr.onerror = () => {
+      toast('Error de red al subir imagen', 'error');
+      reject(new Error('Network error'));
+    };
+    xhr.send(formData);
   });
 }
 
-function setupUploadZone(zoneId, progressId, hiddenId, previewId) {
+function setupUploadZone(zoneId, wrapId, barId, hiddenId, folder, renderFn) {
   const zone = document.getElementById(zoneId);
-  const hidden = document.getElementById(hiddenId);
   if(!zone) return;
-  zone.addEventListener('click', () => {
-    const inp = document.createElement('input'); inp.type='file'; inp.accept='image/*';
-    inp.onchange = async () => handleFileUpload(inp.files[0], progressId, hiddenId, previewId);
+
+  function triggerUpload() {
+    const inp = document.createElement('input');
+    inp.type='file'; inp.accept='image/*';
+    inp.onchange = () => { if(inp.files[0]) handleFileUpload(inp.files[0], wrapId, barId, hiddenId, folder, renderFn); };
     inp.click();
-  });
+  }
+
+  zone.addEventListener('click', triggerUpload);
   zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
   zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
   zone.addEventListener('drop', e => {
     e.preventDefault(); zone.classList.remove('drag');
-    handleFileUpload(e.dataTransfer.files[0], progressId, hiddenId, previewId);
+    if(e.dataTransfer.files[0]) handleFileUpload(e.dataTransfer.files[0], wrapId, barId, hiddenId, folder, renderFn);
   });
 }
 
-async function handleFileUpload(file, progressId, hiddenId, previewId) {
-  if(!file || file.size > 3*1024*1024) { toast('Archivo muy grande (máx 3MB)','error'); return; }
-  const prog = document.getElementById(progressId);
-  if(prog) { prog.style.display='block'; }
-  const bar = document.getElementById(progressId+'Bar');
-  const path = 'uploads/'+Date.now()+'-'+file.name;
+async function handleFileUpload(file, wrapId, barId, hiddenId, folder, renderFn) {
+  if(!file) return;
+  if(file.size > 10 * 1024 * 1024) { toast('Archivo muy grande (máx 10MB)', 'error'); return; }
+  toast('Subiendo imagen...');
   try {
-    const url = await uploadFile(file, path, progressId);
+    const url = await uploadToCloudinary(file, folder, wrapId, barId);
     document.getElementById(hiddenId).value = url;
-    if(previewId === 'coverPreview') renderCoverPreview(url);
-    if(previewId === 'slideImgPreview') renderSlidePreview(url);
-    if(prog) setTimeout(()=>prog.style.display='none', 500);
-    toast('Imagen subida correctamente');
-  } catch(e) { toast('Error al subir','error'); }
+    renderFn(url);
+    toast('Imagen subida correctamente ✓');
+  } catch(e) { /* erro já mostrado dentro do uploadToCloudinary */ }
 }
 
 function renderCoverPreview(url) {
@@ -199,8 +223,8 @@ function renderSlidePreview(url) {
 }
 window.clearSlideImg = () => { document.getElementById('sImageUrl').value=''; renderSlidePreview(null); };
 
-setupUploadZone('coverUploadZone','coverProgress','pCoverImage','coverPreview');
-setupUploadZone('slideUploadZone','slideProgress','sImageUrl','slideImgPreview');
+setupUploadZone('coverUploadZone', 'coverProgress', 'coverProgressBar', 'pCoverImage', 'posts',  renderCoverPreview);
+setupUploadZone('slideUploadZone', 'slideProgress', 'slideProgressBar', 'sImageUrl',   'slides', renderSlidePreview);
 
 // ── SAVE POST ─────────────────────────────────────────────────────────────
 async function savePost(status) {
