@@ -1,7 +1,7 @@
 // HS Gestión – Home JS v2.0.0
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, setDoc, query, where, orderBy, limit, startAfter } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, setDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey:            "AIzaSyDmMP5ZCfl9JfkQQf1xIfcGAei_BPLvKj8",
@@ -183,11 +183,13 @@ let slides = [], currentSlide = 0, sliderTimer = null;
 
 async function loadSlider() {
   try {
-    const snap = await getDocs(query(collection(db,'slides'), orderBy('order','asc')));
+    let snap;
+    try { snap = await getDocs(query(collection(db,'slides'), orderBy('order','asc'))); }
+    catch { snap = await getDocs(collection(db,'slides')); }
     if (snap.empty) { initSlider([]); return; }
-    slides = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    slides = snap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b)=>(a.order||0)-(b.order||0));
     initSlider(slides);
-  } catch { initSlider([]); }
+  } catch(e) { console.error('loadSlider error:', e); initSlider([]); }
 }
 
 function initSlider(data) {
@@ -277,12 +279,10 @@ async function loadBlog(loadMore = false) {
 
   try {
     // Busca todos os publicados (sem orderBy composto — evita exigir índice)
-    const snap = await getDocs(query(
-      collection(db, 'posts'),
-      where('status', '==', 'published')
-    ));
+    // Busca todos e filtra client-side (evita problemas de regras/índice)
+    const snap = await getDocs(collection(db, 'posts'));
 
-    let posts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    let posts = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => p.status === 'published');
 
     // Ordenar client-side por data
     posts.sort((a, b) => {
