@@ -162,9 +162,8 @@ document.getElementById('loginSubmitBtn')?.addEventListener('click', async () =>
 async function redirectUser(user) {
   if (user.email === ADMIN_EMAIL) { window.location.href = 'admin/index.html'; return; }
   try {
-    // Busca pelo UID diretamente (evita query por email que exige permissão extra)
-    const snap = await getDoc(doc(db, 'users', user.uid));
-    if (snap.exists()) {
+    const snap = await getDocs(query(collection(db,'users'), where('email','==',user.email)));
+    if (!snap.empty) {
       window.location.href = 'usuarios/index.html';
     } else {
       const errEl = document.getElementById('loginError');
